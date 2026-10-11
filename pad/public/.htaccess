@@ -1,0 +1,19 @@
+# QPad – Einstellungen für Apache-Webserver (z. B. Alfahosting)
+AddType application/wasm .wasm
+AddType application/manifest+json .webmanifest
+AddType application/javascript .js
+
+# index.html, Service Worker und Vorlagenliste nicht zwischenspeichern, damit Updates sofort ankommen
+<IfModule mod_headers.c>
+  <FilesMatch "^(index\.html|sw\.js|vorlagen\.json)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+# Optional: immer HTTPS verwenden (erst einschalten, wenn https://qpad.… ohne Warnung funktioniert).
+# Wichtig, weil http:// und https:// für den Browser zwei verschiedene Apps mit getrennt gespeicherten Projekten sind.
+#<IfModule mod_rewrite.c>
+#  RewriteEngine On
+#  RewriteCond %{HTTPS} off
+#  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+#</IfModule>

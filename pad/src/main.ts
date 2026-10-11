@@ -613,7 +613,8 @@ class App {
         $("#fontSizeLabel").textContent = this.getFontSize() + " pt";
     }
 
-    newProjectDialog() {
+    async newProjectDialog() {
+        await this.ensureTemplates();
         const name = prompt("Name des neuen Projekts:", "Projekt " + new Date().toLocaleDateString("de-DE"));
         if (!name || !name.trim()) return;
         this.sheet("Womit soll „" + name.trim() + "“ starten?", [
@@ -625,8 +626,11 @@ class App {
         ]);
     }
 
-    templateDialog() {
-        if (this.templates.length == 0) { this.toast("Auf dem Server sind keine Vorlagen hinterlegt (vorlagen/vorlagen.json)."); return; }
+    async templateDialog() {
+        if (!(await this.ensureTemplates())) {
+            alert(this.templateError || "Auf dem Server sind keine Vorlagen hinterlegt (vorlagen/vorlagen.json).");
+            return;
+        }
         this.sheet("Vorlage laden", this.templates.map(t => ({
             label: t.name, hint: t.description, icon: "🗄",
             action: async () => {
@@ -637,11 +641,32 @@ class App {
         })), "Die Datenbank des aktuellen Projekts wird ersetzt.");
     }
 
-    async loadTemplates() {
+    templateError = "";
+
+    /** Lädt die Vorlagenliste; bei Fehlern wird beim nächsten Öffnen erneut versucht */
+    async loadTemplates(): Promise<boolean> {
+        const url = new URL("vorlagen/vorlagen.json", location.href).href;
         try {
-            const r = await fetch("vorlagen/vorlagen.json", { cache: "no-cache" });
-            if (r.ok) this.templates = await r.json();
-        } catch (e) { /* offline */ }
+            const r = await fetch(url, { cache: "no-store" });
+            if (!r.ok) throw new Error(`Der Server antwortet mit HTTP ${r.status}.`);
+            const list = await r.json();
+            if (!Array.isArray(list)) throw new Error("Die Datei ist keine Vorlagenliste.");
+            this.templates = list;
+            this.templateError = "";
+            return true;
+        } catch (e: any) {
+            this.templateError = `Die Vorlagenliste konnte nicht geladen werden:\n${url}\n\n${e?.message ?? e}`;
+            console.warn(this.templateError);
+            return false;
+        }
+    }
+
+    async ensureTemplates(): Promise<boolean> {
+        if (this.templates.length > 0) return true;
+        this.showWait("Lade Vorlagen …");
+        const ok = await this.loadTemplates();
+        this.hideWait();
+        return ok && this.templates.length > 0;
     }
 
     async createProjectFromTemplate(t: Template) {
