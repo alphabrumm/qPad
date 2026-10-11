@@ -1,9 +1,9 @@
-# Veröffentlicht die fertige Web-App (Branch gh-pages) auf GitHub Pages.
+# Baut die iPad-Variante (pad/) bei jeder Änderung auf main und veröffentlicht sie auf GitHub Pages.
 # Voraussetzung: Settings → Pages → Source = "GitHub Actions".
 name: Pages veröffentlichen
 on:
   push:
-    branches: [gh-pages]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,18 +13,25 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
-  deploy:
+  build-deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          ref: gh-pages
+          node-version: 22
+      - name: Abhängigkeiten holen
+        run: |
+          PAD_DEPS="$RUNNER_TEMP/deps" sh pad/setup-deps.sh
+          npm install --prefix "$RUNNER_TEMP/tools" esbuild@0.25 --no-audit --no-fund
+      - name: App bauen
+        run: PAD_DEPS="$RUNNER_TEMP/deps" ESBUILD="$RUNNER_TEMP/tools/node_modules/esbuild/lib/main.js" node pad/build.mjs pad/dist
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: pad/dist
       - id: deployment
         uses: actions/deploy-pages@v4
