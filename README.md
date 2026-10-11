@@ -1,9 +1,9 @@
-# qPad – SQL-IDE für iPad
+# QPad – SQL-IDE für iPad
 
 iPad-taugliche Variante der [SQL-IDE](https://github.com/martin-pabst/SQL-IDE) von Martin Pabst für den Informatikunterricht:
 SQL-Datenbanken lokal im Browser erstellen und testen – ohne Login, Projekte werden am Ende der Stunde als Datei heruntergeladen.
 
-* **Die iPad-Variante liegt im Ordner [`pad/`](pad/README.md)** (Bauanleitung, Server-Anforderungen, Bedienung).
+* **QPad liegt im Ordner [`pad/`](pad/README.md)** (Bauanleitung, Server-Anforderungen, Bedienung). Die App läuft unter https://alphabrumm.github.io/qPad/ .
 * Alle übrigen Ordner stammen unverändert aus der SQL-IDE (Stand Oktober 2026); `pad/` nutzt daraus den Compiler (`src/client/compiler`) und die Beispieldatenbanken.
 
 Lizenz: GPL-3.0 wie das Original (siehe `LICENSE`).

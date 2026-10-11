@@ -1,11 +1,11 @@
-# SQL-IDE für iPad
+# QPad – SQL-IDE für iPad
 
-Touch-taugliche Variante der [SQL-IDE](https://github.com/martin-pabst/SQL-IDE) von Martin Pabst.
+QPad ist die touch-taugliche Variante der [SQL-IDE](https://github.com/martin-pabst/SQL-IDE) von Martin Pabst.
 Alles läuft lokal im Browser – **kein Login, keine Serverlogik, keine Datenbank auf dem Server**.
 
 ## Was ist anders als im Original?
 
-| | Original (sql-ide.de) | iPad-Variante |
+| | Original (sql-ide.de) | QPad |
 |---|---|---|
 | Editor | Monaco (nicht für Touch gebaut) | CodeMirror 6, native iOS-Textauswahl, keine Autokorrektur |
 | Eingabe | Tastatur | zusätzliche Symbolleiste (`; , ( ) * = < > ' %` und SQL-Schlüsselwörter) |

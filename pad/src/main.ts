@@ -1,5 +1,5 @@
 /**
- * SQL-IDE für iPad – Hauptprogramm.
+ * QPad – SQL für das iPad. Hauptprogramm.
  * Alles läuft lokal im Browser: SQLite (WebAssembly), Compiler und Editor. Kein Login, kein Server-Code.
  */
 import type { EditorState } from "@codemirror/state";
@@ -15,6 +15,7 @@ import {
 } from "./project.js";
 import { highlightToHtml } from "./sqlLanguage.js";
 import { translateSqliteError } from "./translate.js";
+import { icon } from "./icons.js";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: any) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -128,7 +129,7 @@ class App {
 
     renderProjectHeader() {
         $("#projectName").textContent = this.project.name;
-        document.title = this.project.name + " – SQL-IDE";
+        document.title = this.project.name + " – QPad";
         this.renderSaveState();
     }
 
@@ -520,56 +521,96 @@ class App {
 
     // ------------------------------------------------------------------ Menüs & Dialoge
 
-    projectMenu() {
-        const canShare = !!(navigator as any).canShare;
-        this.sheet("Projekt", [
-            { label: "Projekt herunterladen", icon: "⬇", hint: "als .sqlprojekt.json – am Ende der Stunde!", action: () => this.downloadProject() },
-            ...(canShare ? [{ label: "Teilen / In Dateien sichern …", icon: "⇪", hint: "z. B. an Teams, AirDrop, Dateien", action: () => this.shareProject() }] : []),
-            { label: "Projekt öffnen …", icon: "📂", hint: "aus Datei oder von diesem Gerät", action: () => this.openDialog() },
-            { label: "Neues Projekt …", icon: "＋", action: () => this.newProjectDialog() },
-            {
-                label: "Projekt umbenennen", icon: "✎", action: () => {
-                    const n = prompt("Name des Projekts:", this.project.name);
-                    if (n && n.trim()) { this.project.name = n.trim(); this.renderProjectHeader(); this.touch(); }
-                }
-            },
-            { label: "Hilfe", icon: "?", action: () => this.showHelp() },
-        ]);
+    // ------------------------------------------------------------------ Menü (Schublade, wie in JPad)
+
+    openDrawer() {
+        this.saveLocal();
+        this.renderDrawer();
+        $("#app").classList.add("drawer-open");
+        $("#drawer").removeAttribute("inert");
+        $("#drawerClose").focus({ preventScroll: true });
     }
 
-    databaseMenu() {
-        this.sheet("Datenbank: " + this.project.templateName, [
-            { label: "Vorlage laden …", icon: "🗄", hint: "Beispieldatenbank vom Schulserver", action: () => this.templateDialog() },
-            { label: "Datenbank aus Datei importieren …", icon: "📥", hint: ".sqlite, .sql (MySQL-Dump), .zip", action: () => this.pickFile("database") },
-            { label: "Datenbank als .sqlite herunterladen", icon: "⬇", action: async () => {
-                const data = await this.db.export();
-                this.downloadBlob(new Blob([data as BlobPart], { type: "application/x-sqlite3" }), safeFileName(this.project.name) + ".sqlite");
-            } },
-            { label: "Letzte Datenänderung rückgängig", icon: "↶", disabled: this.dbUndo.length == 0, action: () => this.undoDatabase() },
-            { label: "Datenbank zurücksetzen", icon: "⟲", hint: "auf den Ausgangszustand", danger: true, action: () => this.resetDatabase() },
-        ]);
+    closeDrawer() {
+        $("#app").classList.remove("drawer-open");
+        $("#drawer").setAttribute("inert", "");
     }
 
-    async openDialog() {
+    async renderDrawer() {
+        $("#drawerDbName").textContent = this.project.templateName;
+        ($("#drawerDbUndo") as HTMLButtonElement).disabled = this.dbUndo.length == 0;
+        $("#drawerShare").style.display = (navigator as any).canShare ? "" : "none";
+        this.renderSettings();
         let projects: Project[] = [];
         try { projects = await LocalStore.list(); } catch (e) { }
-        const items = projects.map(p => ({
-            label: p.name + (p.id == this.project.id ? " (geöffnet)" : ""),
-            hint: "zuletzt geändert " + new Date(p.modified).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }),
-            icon: "▤",
-            action: async () => { if (p.id != this.project.id) { await this.saveLocal(); await this.setProject(p); } },
-            secondary: p.id == this.project.id ? undefined : {
-                label: "Löschen", action: async () => {
-                    if (!confirm(`Projekt „${p.name}“ von diesem Gerät löschen?`)) return false;
-                    await LocalStore.remove(p.id);
-                    return true;
-                }
-            }
-        }));
-        this.sheet("Projekt öffnen", [
-            { label: "Projektdatei öffnen …", icon: "📂", hint: "eine heruntergeladene .sqlprojekt.json", action: () => this.pickFile("project") },
-            ...items
-        ], projects.length > 0 ? "Auf diesem Gerät gespeichert:" : undefined, 1);
+        const ul = $("#projectList");
+        ul.innerHTML = "";
+        const fmt = new Intl.DateTimeFormat("de-DE", { dateStyle: "short", timeStyle: "short" });
+        for (const p of projects) {
+            const isCurrent = p.id == this.project.id;
+            const li = document.createElement("li");
+            li.className = "qp-projectitem" + (isCurrent ? " is-current" : "");
+            li.innerHTML = `
+                <button class="qp-projectitem-open">${icon(isCurrent ? "check" : "folder")}
+                    <span><span class="qp-projectitem-name">${esc(p.name)}</span>
+                    <span class="qp-projectitem-date">geändert ${fmt.format(new Date(p.modified))}</span></span>
+                </button>
+                <button class="iconbtn qp-projectitem-del" aria-label="Projekt „${esc(p.name)}“ löschen">${icon("trash")}</button>`;
+            (li.querySelector(".qp-projectitem-open") as HTMLElement).onclick = async () => {
+                this.closeDrawer();
+                if (!isCurrent) { await this.saveLocal(); await this.setProject(p); }
+            };
+            (li.querySelector(".qp-projectitem-del") as HTMLElement).onclick = () => this.deleteProject(p);
+            ul.appendChild(li);
+        }
+    }
+
+    async deleteProject(p: Project) {
+        const unsaved = p.modified > p.downloaded;
+        if (!confirm(`„${p.name}“ von diesem Gerät löschen?\n\n` + (unsaved
+            ? "Das Projekt wurde seit der letzten Änderung nicht heruntergeladen und ist danach verloren."
+            : "Deine heruntergeladene Projektdatei bleibt erhalten."))) return;
+        await LocalStore.remove(p.id);
+        if (p.id == this.project.id) {
+            const rest = await LocalStore.list();
+            await this.setProject(rest[0] ?? newProject("Mein Projekt"));
+        }
+        this.renderDrawer();
+    }
+
+    renameProject() {
+        const n = prompt("Name des Projekts:", this.project.name);
+        if (n && n.trim() && n.trim() != this.project.name) {
+            this.project.name = n.trim();
+            this.renderProjectHeader();
+            this.touch();
+        }
+    }
+
+    // ------------------------------------------------------------------ Darstellung
+
+    getThemeChoice(): string {
+        try { return localStorage.getItem("qpad.theme") || "auto"; } catch (e) { return "auto"; }
+    }
+    setThemeChoice(c: string) {
+        try { localStorage.setItem("qpad.theme", c); } catch (e) { }
+        applyTheme();
+        this.renderSettings();
+    }
+    getFontSize(): number {
+        try { return parseInt(localStorage.getItem("qpad.fontSize") || "") || 16; } catch (e) { return 16; }
+    }
+    setFontSize(size: number) {
+        size = Math.max(12, Math.min(26, size));
+        try { localStorage.setItem("qpad.fontSize", String(size)); } catch (e) { }
+        document.documentElement.style.setProperty("--editor-font", size + "px");
+        this.editor?.view.requestMeasure();
+        this.renderSettings();
+    }
+    renderSettings() {
+        const c = this.getThemeChoice();
+        document.querySelectorAll<HTMLElement>("[data-theme-choice]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.themeChoice == c)));
+        $("#fontSizeLabel").textContent = this.getFontSize() + " pt";
     }
 
     newProjectDialog() {
@@ -698,7 +739,7 @@ class App {
     showHelp() {
         this.dialog("Hilfe", `
             <p><b>Alles bleibt auf deinem iPad.</b> Datenbank und Skripte werden automatisch im Browser gesichert.
-            Am Ende der Stunde lädst du dein Projekt mit <b>⬇</b> herunter (Dateien → Downloads) und öffnest es nächstes Mal wieder über <b>Projekt → Projekt öffnen</b>.</p>
+            Am Ende der Stunde lädst du dein Projekt mit <b>⬇</b> herunter (Dateien → Downloads) und öffnest es nächstes Mal wieder über <b>☰ Menü → Projekt aus Datei öffnen</b>.</p>
             <h3>Ausführen</h3>
             <p><b>▶ Ausführen</b> führt die Anweisung aus, in der der Cursor steht (grün markiert). Markierst du mehrere Anweisungen, werden alle ausgeführt.
             <b>Alle</b> führt das ganze Skript aus. Rot markierte Anweisungen enthalten Fehler – die Fehlermeldung steht unter dem Editor.</p>
@@ -708,16 +749,16 @@ class App {
             <h3>Tastatur</h3>
             <p><kbd>⇧</kbd>+<kbd>↩</kbd> oder <kbd>⌘</kbd>+<kbd>↩</kbd> ausführen · <kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>↩</kbd> alles ausführen · <kbd>⌘</kbd>+<kbd>Z</kbd> rückgängig · <kbd>Ctrl</kbd>+<kbd>Leertaste</kbd> Vorschläge</p>
             <h3>Fehler gemacht?</h3>
-            <p><b>Datenbank → Letzte Datenänderung rückgängig</b> nimmt die letzte Änderung an den Daten zurück, <b>Datenbank zurücksetzen</b> stellt den Ausgangszustand wieder her.</p>
-            <p class="muted">Basiert auf der <a href="https://github.com/martin-pabst/SQL-IDE" target="_blank">SQL-IDE</a> von Martin Pabst (Compiler, Fehlermeldungen) · Editor: CodeMirror · Datenbank: SQLite (sql.js).</p>
+            <p><b>↶ Daten</b> bzw. <b>☰ Menü → Letzte Datenänderung rückgängig</b> nimmt die letzte Änderung an den Daten zurück, <b>☰ Menü → Datenbank zurücksetzen</b> stellt den Ausgangszustand wieder her.</p>
+            <p class="muted">QPad basiert auf der <a href="https://github.com/martin-pabst/SQL-IDE" target="_blank">SQL-IDE</a> von Martin Pabst (Compiler, Fehlermeldungen) · Editor: CodeMirror · Datenbank: SQLite (sql.js).</p>
         `);
     }
 
     showWelcome() {
-        this.dialog("Willkommen!", `
-            <p>Mit dieser App schreibst und testest du SQL-Anweisungen direkt auf dem iPad – ohne Anmeldung.</p>
+        this.dialog("Willkommen bei QPad!", `
+            <p>Mit QPad schreibst und testest du SQL-Anweisungen direkt auf dem iPad – ohne Anmeldung.</p>
             <ol>
-                <li>Wähle unter <b>Datenbank → Vorlage laden</b> eine Beispieldatenbank oder öffne eine Projektdatei deiner Lehrkraft.</li>
+                <li>Wähle unter <b>☰ Menü → Vorlage laden</b> eine Beispieldatenbank oder öffne eine Projektdatei deiner Lehrkraft.</li>
                 <li>Schreibe SQL in den Editor und tippe auf <b>▶ Ausführen</b>.</li>
                 <li>Lade dein Projekt am Ende der Stunde mit <b>⬇</b> herunter.</li>
             </ol>`, [
@@ -836,9 +877,30 @@ class App {
     }
 
     bindUi() {
-        $("#btnProject").onclick = () => this.projectMenu();
-        $("#projectName").onclick = () => this.projectMenu();
-        $("#btnDatabase").onclick = () => this.databaseMenu();
+        $("#btnProject").onclick = () => this.openDrawer();
+        $("#projectName").onclick = () => this.renameProject();
+        $("#drawerClose").onclick = () => this.closeDrawer();
+        $("#drawerBackdrop").onclick = () => this.closeDrawer();
+        const menu = (id: string, f: () => any) => $(id).onclick = () => { this.closeDrawer(); f(); };
+        menu("#drawerNew", () => this.newProjectDialog());
+        menu("#drawerOpen", () => this.pickFile("project"));
+        menu("#drawerSave", () => this.downloadProject());
+        menu("#drawerShare", () => this.shareProject());
+        menu("#drawerRename", () => this.renameProject());
+        menu("#drawerTemplate", () => this.templateDialog());
+        menu("#drawerImport", () => this.pickFile("database"));
+        menu("#drawerExportDb", async () => {
+            const data = await this.db.export();
+            this.downloadBlob(new Blob([data as BlobPart], { type: "application/x-sqlite3" }), safeFileName(this.project.name) + ".sqlite");
+        });
+        menu("#drawerDbUndo", () => this.undoDatabase());
+        menu("#drawerReset", () => this.resetDatabase());
+        menu("#drawerHelp", () => this.showHelp());
+        document.querySelectorAll<HTMLElement>("[data-theme-choice]").forEach(b => b.onclick = () => this.setThemeChoice(b.dataset.themeChoice));
+        $("#fontSmaller").onclick = () => this.setFontSize(this.getFontSize() - 1);
+        $("#fontBigger").onclick = () => this.setFontSize(this.getFontSize() + 1);
+        this.setFontSize(this.getFontSize());
+        document.addEventListener("keydown", e => { if (e.key == "Escape") this.closeDrawer(); });
         $("#btnDownload").onclick = () => this.downloadProject();
         $("#btnSchema").onclick = () => this.toggleSidebar();
         $("#btnSidebarClose").onclick = () => this.toggleSidebar(false);
@@ -849,7 +911,6 @@ class App {
         $("#btnUndo").onclick = () => this.editor.undo();
         $("#btnRedo").onclick = () => this.editor.redo();
         $("#status").onclick = () => this.editor.gotoNextError();
-        $("#btnHelp").onclick = () => this.showHelp();
         ["#btnRun", "#btnRunAll", "#btnUndo", "#btnRedo"].forEach(s => $(s).addEventListener("mousedown", e => e.preventDefault()));
 
         this.setupSplitter();
@@ -904,6 +965,17 @@ type SheetItem = {
     action: () => any,
     secondary?: { label: string, action: () => Promise<boolean> }
 };
+
+/** Hell/Dunkel/System – wie in JPad über data-effective am <html>-Element */
+function applyTheme() {
+    let choice = "auto";
+    try { choice = localStorage.getItem("qpad.theme") || "auto"; } catch (e) { }
+    const dark = choice == "dark" || (choice == "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.dataset.effective = dark ? "dark" : "light";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#16181d" : "#f4f5f7");
+}
+applyTheme();
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", applyTheme);
 
 function isModifying(st: SQLStatement): boolean {
     return st.ast != null && st.ast.type != TokenType.keywordSelect && st.ast.type != TokenType.omittedeStatement;
