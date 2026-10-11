@@ -1,0 +1,76 @@
+import * as monaco from 'monaco-editor';
+import { MainBase } from "../../main/MainBase.js";
+import { TextPosition } from "../lexer/Token";
+import { Module } from "./Module";
+
+type SemicolonPosition = {
+    position: TextPosition;
+    module: Module;
+    firstSeenMs: number;
+    isThereAgain: boolean;
+}
+
+export class SemicolonAngel {
+    
+    semicolonPositions: SemicolonPosition[] = [];
+    time: number;
+
+    constructor(private main: MainBase){
+
+    }
+
+    startRegistering(){
+        this.semicolonPositions.forEach(p => p.isThereAgain = false);
+        this.time = new Date().getTime();
+    }
+
+    register(position: TextPosition, module: Module){
+        let oldEvidence = this.semicolonPositions.find(p => p.position.line == position.line && p.position.column == position.column);
+        if(oldEvidence){
+            oldEvidence.isThereAgain = true;
+        } else {
+            this.semicolonPositions.push({position: position, firstSeenMs: this.time, isThereAgain: true, module: module});
+        }
+    }
+
+    healSemicolons(){
+
+        if(!this.main.getSettings().getValue("editor.autoSemicolons")) return;
+
+        let time = new Date().getTime();
+        this.semicolonPositions = this.semicolonPositions.filter(p => p.isThereAgain);
+
+        let currentlyEditedFile = this.main.getCurrentlyEditedFile();
+        if(currentlyEditedFile == null) return;
+        let cursorLine = this.main.getMonacoEditor().getPosition()?.lineNumber;
+
+        if(typeof cursorLine == "undefined") return;
+
+        this.semicolonPositions.filter(p => time - p.firstSeenMs > 2000).forEach(p => {
+
+            let isCurrentModule = p.module.file.id != null && p.module.file.id == currentlyEditedFile.id;
+
+            let editOperations: monaco.editor.IIdentifiedSingleEditOperation[] = [
+                {
+                    range: new monaco.Range(p.position.line, p.position.column, p.position.line, p.position.column),
+                    text: ";",
+                    forceMoveMarkers: true
+                }
+            ]
+
+            if(isCurrentModule){
+                if(Math.abs(cursorLine - p.position.line) > 1){
+                    let editor = this.main.getMonacoEditor();
+                    const selection = editor.getSelection();
+                    editor.executeEdits('Semicolon-Angel', editOperations);
+                    editor.setSelection(selection);
+                    this.semicolonPositions.splice(this.semicolonPositions.indexOf(p), 1);
+                }
+            } 
+
+
+        });
+
+    }
+
+}

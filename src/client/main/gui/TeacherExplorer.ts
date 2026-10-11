@@ -1,0 +1,357 @@
+import { Main } from "../Main.js";
+import { ClassData, UserData, Pruefung, PruefungCaptions, getUserDisplayName, GetClassesDataResponse, type GetSingleUseSessionTokenResponse, type GetPruefungenForLehrkraftResponse } from "../../communication/Data.js";
+import { ajaxAsync, csrfToken, SINGLEUSETOKEN } from "../../communication/AjaxHelper.js";
+import { Workspace } from "../../workspace/Workspace.js";
+import jQuery from "jquery";
+import { PushClientManager } from "../../communication/pushclient/PushClientManager.js";
+import * as monaco from 'monaco-editor'
+import { Treeview } from "../../../tools/components/treeview/Treeview.js";
+import type { IconButtonComponent } from "../../../tools/IconButtonComponent.js";
+import { ProjectExplorerMessages } from "./language/ProjectExplorerMessages.js";
+import { TeacherExplorerMessages } from "./language/TeacherExplorerMessages.js";
+import { GUIToggleButton } from "../../../tools/GUIToggleButton.js";
+import '/assets/css/teacherexplorer.css';
+
+
+export class TeacherExplorer {
+
+    studentPanel: Treeview<UserData, UserData>;
+    classPanel: Treeview<ClassData | Pruefung, ClassData | Pruefung>;
+
+    // save them here when displaying pupils workspaces:
+    ownWorkspaces: Workspace[];
+    currentOwnWorkspace: Workspace;
+
+    pruefungen: Pruefung[] = [];
+
+    classPanelMode: "classes" | "tests" = "classes";
+
+    currentPruefung: Pruefung = null;
+
+    homeButton: IconButtonComponent;
+
+    $buttonContainer: JQuery<HTMLElement>;
+
+
+    constructor(private main: Main, public classData: ClassData[]) {
+        this.fetchPruefungen();
+    }
+
+    removePanels() {
+        this.classPanel.setVisible(false);
+        this.studentPanel.setVisible(false);
+    }
+
+    initGUI() {
+
+        this.initStudentPanel();
+
+        this.initClassPanel();
+
+        this.main.projectExplorer.accordion.onResize(true);
+
+        this.renderClasses(this.classData);
+
+        PushClientManager.subscribe("onPruefungChanged", async () => {
+            await this.fetchPruefungen()
+            if (this.classPanelMode == "tests") {
+                this.renderPruefungen();
+            }
+        });
+
+        PushClientManager.subscribe("onClassesChanged", async () => {
+            let response = await ajaxAsync("/servlet/getClassesData", { wholeSchool: false }) as GetClassesDataResponse;
+            this.classData = response.classDataList;
+            if (this.classPanelMode == "classes") {
+                let currentClass: ClassData = null;
+                let selectedNodes = this.classPanel.getCurrentlySelectedNodes();
+                if (selectedNodes?.length > 0) {
+                    currentClass = selectedNodes[0].externalObject as ClassData;
+                }
+                this.renderClasses(this.classData);
+                if (currentClass != null) {
+                    let newCurrentClass = this.classData.find(c => c.id == currentClass.id);
+                    if (newCurrentClass != null) {
+                        this.classPanel.selectElement(newCurrentClass, false);
+                        this.renderStudents(newCurrentClass.students);
+                    }
+                }
+                if (this.main.currentWorkspace.owner_id != this.main.user.id) {
+                    this.onHomeButtonClicked();
+                }
+            }
+        });
+
+        this.homeButton = this.studentPanel.captionLineAddIconButton(
+            "img_home-dark", "right", () => {
+                this.onHomeButtonClicked();
+            }, ProjectExplorerMessages.displayOwnDatabases()
+        )
+
+        this.homeButton.setVisible(false);
+
+    }
+
+    initStudentPanel() {
+
+        this.studentPanel = new Treeview(this.main.projectExplorer.accordion,
+            {
+                captionLine: {
+                    enabled: true,
+                    text: TeacherExplorerMessages.students()
+                },
+                withSelection: true,
+                selectMultiple: false,
+                isDragAndDropSource: false,
+                buttonAddElements: false,
+                withDeleteButtons: false,
+                buttonAddFolders: false,
+                defaultIconClass: "img_user-dark",
+                flexWeight: "1",
+                minHeight: 100,
+                withFolders: false,
+                comparator: (a, b) => {
+                    if (a.vidis_akronym && b.vidis_akronym) {
+                        return getUserDisplayName(a) > getUserDisplayName(b) ? 1 : -1;
+                    }
+                    if (a.familienname > b.familienname) return 1;
+                    if (b.familienname > a.familienname) return -1;
+                    if (a.rufname > b.rufname) return 1;
+                    if (b.rufname > a.rufname) return -1;
+                    return 0;
+                },
+                orderBy: "comparator"
+            }
+        );
+
+        this.studentPanel.nodeClickedCallback = (student: UserData) => {
+            if (this.classPanelMode == "classes") {
+                this.main.projectExplorer.fetchAndRenderWorkspaces(student, this);
+            } else {
+                this.main.projectExplorer.fetchAndRenderWorkspaces(student, this, this.currentPruefung);
+            }
+        }
+
+    }
+
+    restoreOwnWorkspaces() {
+        let main = this.main;
+
+        main.getMonacoEditor().updateOptions({ readOnly: true });
+
+        main.workspaceList = this.ownWorkspaces;
+        main.currentWorkspace = this.currentOwnWorkspace;
+        main.workspacesOwnerId = main.user.id;
+        main.projectExplorer.setExplorerColor(null);
+
+        main.projectExplorer.renderWorkspaces(main.workspaceList);
+
+        if (main.currentWorkspace == null && main.workspaceList.length > 0) {
+            main.currentWorkspace = main.workspaceList[0];
+        }
+
+        if (main.currentWorkspace != null) {
+            main.projectExplorer.setWorkspaceActive(main.currentWorkspace, true);
+        }
+
+        this.studentPanel.selectElement(null, false);
+
+    }
+
+     initClassPanel() {
+        let that = this;
+
+        this.$buttonContainer = jQuery('<div class="joe_teacherExplorerClassButtons"></div>');
+
+        this.classPanel = new Treeview(this.main.projectExplorer.accordion, {
+            captionLine: {
+                enabled: true,
+                element: this.$buttonContainer[0]
+            },
+            withSelection: true,
+            selectMultiple: false,
+            isDragAndDropSource: false,
+            buttonAddElements: false,
+            withDeleteButtons: false,
+            buttonAddFolders: false,
+            defaultIconClass: "img_class-dark",
+            flexWeight: "1",
+            minHeight: 100,
+            withFolders: false,
+            orderBy: "comparator"
+
+        })
+        this.classPanel.nodeClickedCallback = (classOrPruefung) => {
+
+            that.main.networkManager.sendUpdatesAsync().then(() => {
+
+                if (this.classPanelMode == "classes") {
+
+                    let classData = <ClassData>classOrPruefung;
+                    if (classData != null) {
+                        this.renderStudents(classData.students);
+                    }
+
+                } else {
+                    this.onSelectPruefung(<Pruefung>classOrPruefung);
+                }
+            });
+
+        }
+        this.initPruefungButtons();
+    }
+
+    initPruefungButtons() {
+        if (this.main.settings.getValue("schooladmin.functionality.pruefungen") == "enabled") {
+            this.$buttonContainer.empty();
+            let toggleButtonClass = new GUIToggleButton(TeacherExplorerMessages.classes(), this.$buttonContainer, true);
+            let toggleButtonTest = new GUIToggleButton(TeacherExplorerMessages.tests(), this.$buttonContainer, false);
+            toggleButtonClass.linkTo(toggleButtonTest);
+
+
+
+            let buttonPruefungAdministration = this.classPanel.captionLineAddIconButton("img_gear-dark", "right",
+                async () => {
+                    let response = await ajaxAsync("servlet/getSingleUseSessionToken", {}) as GetSingleUseSessionTokenResponse;
+                    if (response.success) {
+                        window.open("administration_mc.html?" + SINGLEUSETOKEN + "=" + response.singleUseSessionToken + "&lang=" + (this.main.guiState.language ?? "de") + "&menuItem=manageTests");
+                        // window.open(`administration_mc.html?csrfToken=${csrfToken}&menuItem=manageTests`, '_blank').focus();
+                    }
+                }, TeacherExplorerMessages.createNewTest());
+
+            buttonPruefungAdministration.setVisible(false);
+
+            toggleButtonTest.onChange(async (checked) => {
+                buttonPruefungAdministration?.setVisible(checked);
+                this.classPanelMode = checked ? "tests" : "classes";
+                this.main.networkManager.sendUpdatesAsync().then(() => {
+                    if (checked) {
+                        if (this.main.workspacesOwnerId == this.main.user.id) {
+                            this.ownWorkspaces = this.main.workspaceList.slice();
+                            this.currentOwnWorkspace = this.main.currentWorkspace;
+                        }
+                        this.renderPruefungen();
+                        let firstPruefung = this.pruefungen.find(p => ["preparing", "running"].indexOf(p.state) < 0);
+                        if (firstPruefung != null) {
+                            this.classPanel.selectElement(firstPruefung, true);
+                        }
+                    } else {
+                        this.renderClasses(this.classData);
+                        this.onHomeButtonClicked();
+                    }
+                })
+            })
+        }
+
+    }
+
+    onSelectPruefung(p: Pruefung) {
+
+        this.currentPruefung = p;
+        let projectExplorer = this.main.projectExplorer;
+
+        if (p.state == "preparing" || p.state == "running") {
+            alert(TeacherExplorerMessages.testIsInState(PruefungCaptions[p.state]));
+
+            projectExplorer.fileTreeview.clear();
+            projectExplorer.fileTreeview.setCaption("---");
+            projectExplorer.workspaceTreeview.clear();
+            this.studentPanel.clear();
+            this.main.getMonacoEditor().setModel(monaco.editor.createModel(TeacherExplorerMessages.noFile(), "text"));
+
+
+        } else {
+            let klass = this.classData.find(c => c.id == p.klasse_id);
+            if (klass != null) {
+                this.renderStudents(klass.students);
+                if (klass.students.length > 0) {
+                    this.studentPanel.selectElement(klass.students[0], true);
+                }
+            }
+        }
+
+    }
+
+    renderStudents(userDataList: UserData[]) {
+        this.studentPanel.clear();
+
+        this.studentPanel.setCaption(userDataList.length + " " + TeacherExplorerMessages.students());
+
+        userDataList.sort(this.studentPanel.config.comparator);
+
+        for (let i = 0; i < userDataList.length; i++) {
+
+            let ud = userDataList[i];
+            this.studentPanel.addNode(false, getUserDisplayName(ud, true), "img_user-dark", ud);
+
+        }
+
+    }
+
+    renderClasses(classDataList: ClassData[]) {
+        this.studentPanel.clear();
+        this.studentPanel.setCaption(TeacherExplorerMessages.students());
+        this.classPanel.clear();
+
+        classDataList.sort((a, b) => {
+            return a.name.localeCompare(b.name);
+        })
+
+        for (let cd of classDataList) {
+            this.classPanel.addNode(false, cd.name, "img_class-dark", cd);
+        }
+
+    }
+
+    renderPruefungen() {
+        this.classPanel.clear();
+
+        this.pruefungen.forEach(p => this.addPruefungToClassPanel(p));
+    }
+
+    addPruefungToClassPanel(p: Pruefung) {
+
+        this.classPanel.addNode(false, p.name, "img_test-state-preparing", p);
+        this.updateClassNameAndState(p);
+
+    }
+
+    updateClassNameAndState(p: Pruefung) {
+        let node = this.classPanel.findNodeByElement(p);
+        if (!node) return;
+        let klasse = this.classData.find(c => c.id == p.klasse_id);
+        if (klasse != null) {
+            node.renderCaptionAsHtml = true;
+            node.caption = `<span class="joe_pruefung_name">${p.name} </span>` +
+                `<span class="joe_pruefung_klasse" style="margin: 0 4px">(${klasse.name})</span>`;
+        }
+
+        node.iconClass = "img_test-state-" + p.state;
+        node.iconTooltip = PruefungCaptions[p.state];
+    }
+
+    async fetchPruefungen() {
+
+        let response = await ajaxAsync("/servlet/getPruefungenForLehrkraft", {}) as GetPruefungenForLehrkraftResponse;
+        this.pruefungen = response.pruefungen;
+
+    }
+
+    async onHomeButtonClicked() {
+        let projectExplorer = this.main.projectExplorer;
+        await this.main.networkManager.sendUpdatesAsync();
+
+        this.main.bottomDiv.hideHomeworkTab();
+
+        projectExplorer.addDatabaseButton.setVisible(true);
+        projectExplorer.workspaceTreeview.addFolderButton.setVisible(true);
+        this.homeButton.setVisible(false);
+        projectExplorer.fileTreeview.addElementsButton.setVisible(this.main.workspaceList.length > 0);
+        projectExplorer.fileTreeview.addFolderButton.setVisible(this.main.workspaceList.length > 0);
+
+        this.main.teacherExplorer.restoreOwnWorkspaces();
+        this.main.networkManager.updateFrequencyInSeconds = this.main.networkManager.ownUpdateFrequencyInSeconds;
+    }
+
+
+}

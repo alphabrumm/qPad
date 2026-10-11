@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="SQL-IDE">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#16181d" media="(prefers-color-scheme: dark)">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <title>SQL-IDE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app" class="app">
+    <header class="topbar">
+        <button id="btnProject" class="iconbtn" title="Projekt-Menü" aria-label="Projekt-Menü">☰</button>
+        <button id="projectName" class="project-name" title="Projekt-Menü">…</button>
+        <span id="savedLocal" class="saved-local"></span>
+        <span class="spacer"></span>
+        <button id="btnSchema" class="btn ghost" title="Tabellen anzeigen">Tabellen</button>
+        <button id="btnDatabase" class="btn ghost" title="Datenbank-Menü">Datenbank</button>
+        <button id="btnHelp" class="iconbtn" title="Hilfe" aria-label="Hilfe">?</button>
+        <button id="btnDownload" class="btn download" title="Projekt herunterladen"><span class="dl-ico">⬇</span><span class="dl-txt">Herunterladen</span></button>
+    </header>
+
+    <main class="workspace">
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-head">
+                <div>
+                    <div class="sidebar-title">Tabellen</div>
+                    <div id="dbName" class="db-name"></div>
+                </div>
+                <button id="btnSidebarClose" class="iconbtn only-narrow" aria-label="Schließen">✕</button>
+            </div>
+            <div id="schemaTree" class="schema-tree"></div>
+        </aside>
+        <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+        <section id="center" class="center">
+            <div class="editor-pane">
+                <div class="tabbar">
+                    <div id="scriptTabs" class="tabs"></div>
+                    <button id="btnUndo" class="iconbtn small" title="Rückgängig" aria-label="Rückgängig">↶</button>
+                    <button id="btnRedo" class="iconbtn small" title="Wiederholen" aria-label="Wiederholen">↷</button>
+                </div>
+                <div id="symbolbar" class="symbolbar" aria-label="Eingabehilfen"></div>
+                <div id="editor" class="editor"></div>
+            </div>
+
+            <div class="runbar">
+                <button id="btnRun" class="btn run" title="Anweisung ausführen (⇧↩)">▶&nbsp;Ausführen</button>
+                <button id="btnRunAll" class="btn ghost" title="Ganzes Skript ausführen (⌘⇧↩)">Alle</button>
+                <div id="status" class="status" role="status"></div>
+                <button id="btnDbUndo" class="btn ghost disabled" title="Letzte Datenänderung rückgängig">↶&nbsp;Daten</button>
+            </div>
+            <div id="splitter" class="splitter" aria-hidden="true"><span></span></div>
+
+            <div id="results" class="results"></div>
+        </section>
+    </main>
+    <div id="loading" class="loading"><div class="spinner"></div>SQL-IDE wird geladen …</div>
+</div>
+<noscript>Diese Seite benötigt JavaScript.</noscript>
+<script type="module" src="app.js"></script>
+</body>
+</html>

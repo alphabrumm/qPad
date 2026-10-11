@@ -1,0 +1,138 @@
+:root {
+    --bottomdiv-tabheading-hover: white;
+    --bottomdiv-tabheading-active: rgb(97,97,255);
+    --noErrorMessage: rgb(37, 211, 37);
+    --console-top-borderbottom: #c4c4c4;
+    --console-top-background: #1e1e1e;
+    --consoleEntry-withBorder: #303030;
+    --consoleEntryValue: white;
+    --consoleEntryIdentifier: rgb(156, 156, 235);
+    --consoleEntryNoValue: gray;
+    --consoleEntryCaption: white;
+    --error-Caption: rgb(166, 165, 176);
+    --console-error: rgb(236, 41, 41);
+    --homework-workspace: rgb(77, 77, 224);
+    --homework-file: green;
+    --table-even: #222; /*#d1d2e4*/
+    --table-heading: #202060; /*#c3f2b9*/
+
+}
+
+
+.jo_bottomdiv-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+
+.jo_resultTab {
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 12px;
+    letter-spacing: 0px;
+    overflow: auto;
+    height: 100%;
+    position: relative;
+}
+
+
+.jo_label_destination:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+
+
+.jo_decorationsOverviewRuler {
+    display: none;
+}
+
+
+.jo_network-busy {
+    visibility: hidden;
+    margin-right: 8px;
+}
+
+.jo_homeworkTabheading {
+    visibility: hidden;
+}
+
+.jo_homeworkTab {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+
+.jo_homeworkTabLeft {
+    display: flex;
+    padding: 0 4px;
+    flex-direction: column;
+    flex: 1;
+    border-right: 1px solid gray;
+    overflow: auto;
+}
+
+.jo_homeworkTabRight {
+    display: flex;
+    padding: 0 4px;
+    flex-direction: column;
+    flex: 4;
+    overflow: auto;
+}
+
+.jo_homeworkDate {
+    border-bottom: 1px dotted gray;
+    cursor: pointer;
+    user-select: none;
+}
+
+.jo_homeworkDate:hover, .jo_homeworkEntry:hover {
+    background-color: var(--file-hover);
+}
+
+.jo_homeworkDate:active, .jo_homeworkEntry:active {
+    filter: brightness(130%);
+}
+
+.jo_homeworkEntry {
+    cursor: pointer;
+    user-select: none;
+}
+
+.jo_homeworkDate.jo_active:hover {
+    background-color: var(--file-active-hover);
+}
+
+.jo_homeworkDate.jo_active {
+    background-color: var(--file-active);
+}
+
+.jo_homeworkHeading {
+    color: var(--fontColorLight);
+    font-weight: bold;
+}
+
+.jo_homeworkRevisionButton {
+    background-color: var(--loginButtonBackground);
+    color: var(--loginButtonFontColor);
+    padding: 2px 4px;
+    margin-right: 10px;
+    border-radius: 2px;
+}
+
+.img_homework-corrected {
+    width: 24px !important;
+} 
+
+.jo_homework-workspace {
+    color: var(--homework-workspace);
+}
+
+.jo_homework-file {
+    color: var(--homework-file);
+}
+

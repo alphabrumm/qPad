@@ -1,0 +1,133 @@
+import { Formatter } from "../main/gui/Formatter.js";
+import { ThemeManager } from "../main/gui/ThemeManager.js";
+import { MainEmbedded } from "./MainEmbedded.js";
+import jQuery from "jquery";
+
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
+import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+
+import "/assets/fonts/fonts.css";
+import '/assets/css/editor.css';
+import '/assets/css/bottomdiv.css';
+import '/assets/css/run.css';
+import '/assets/css/icons.css';
+import '/assets/css/databaseExplorer.css';
+import '/assets/css/embedded.css';
+
+
+// declare const require: any;
+
+export type JOScript = {
+    title: string;
+    text: string;
+}
+
+function initMonacoEditor(): void {
+    // see https://github.com/microsoft/monaco-editor/blob/main/docs/integrate-esm.md#using-vite
+    // https://dev.to/lawrencecchen/monaco-editor-svelte-kit-572
+    // https://github.com/microsoft/monaco-editor/issues/4045
+
+    self.MonacoEnvironment = {
+        getWorker: (_workerId, label) => {
+            switch (label) {
+                case 'json':
+                    return new jsonWorker()
+                case 'css':
+                case 'scss':
+                case 'less':
+                    return new cssWorker()
+                case 'html':
+                case 'handlebars':
+                case 'razor':
+                    return new htmlWorker()
+                case 'typescript':
+                case 'javascript':
+                    return new tsWorker()
+                default:
+                    return new editorWorker()
+            }
+        }
+    };
+
+}
+
+export class EmbeddedStarter {
+
+
+    startupComplete = 2;
+
+    themeManager: ThemeManager;
+
+    mainEmbeddedList: MainEmbedded[] = [];
+
+    initGUI() {
+
+        this.checkStartupComplete();
+
+        this.themeManager = new ThemeManager();
+    }
+
+    initEditor() {
+        new Formatter().init();
+        this.checkStartupComplete();
+    }
+
+    checkStartupComplete() {
+        this.startupComplete--;
+        if (this.startupComplete == 0) {
+            this.start();
+        }
+    }
+
+    start() {
+
+        this.initJavaOnlineDivs();
+
+    }
+
+    initJavaOnlineDivs() {
+
+        jQuery('.sql-online').each((index: number, element: HTMLElement) => {
+            let $div = jQuery(element);
+            let scriptList: JOScript[] = [];
+            $div.find('script').each((index: number, element: HTMLElement) => {
+                let $script = jQuery(element);
+                let script: JOScript = {
+                    title: $script.attr('title'),
+                    text: $script.text().trim()
+                };
+                scriptList.push(script);
+            });
+
+            this.initDiv($div, scriptList);
+
+        });
+
+    }
+
+    initDiv($div: JQuery<HTMLElement>, scriptList: JOScript[]) {
+
+        $div.addClass('joeCssFence');
+
+        new MainEmbedded($div, scriptList);
+
+    }
+
+}
+
+jQuery(function () {
+
+    let embeddedStarter = new EmbeddedStarter();
+
+    initMonacoEditor();
+
+    embeddedStarter.initEditor();
+    embeddedStarter.initGUI();
+
+    //@ts-ignore
+    console.log("SQL-IDE embedded Version " + APP_VERSION + " vom " + BUILD_DATE);
+
+});

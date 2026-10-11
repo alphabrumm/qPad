@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM", "WebWorker"],
+    "moduleResolution": "Node",
+    "strict": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "noUnusedLocals": false,
+    "noImplicitReturns": false,
+    "noUnusedParameters": false
+  },
+  "include": ["src"],
+  "exclude": ["src/development"]
+}
+

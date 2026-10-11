@@ -1,0 +1,39 @@
+html,
+body {
+    position: relative;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    color: var(--fontColorNormal);
+    font-family: 'Roboto', sans-serif;
+    /* font-weight: 500; */
+    overflow: auto;
+    font-size: 10pt;
+}
+
+/**
+    BugFix for Monaco editor. Without this code editor pane of References-Widget is 5px wide and 5px high
+**/
+.inline {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--scrollbar);
+}
+
+#pruefunglaeuft {
+    display: none;
+    background-color: #2f8024;
+    padding: 3px;
+    text-align: center;
+}
+
+#pruefunglaeuft>span {
+    display: inline-block;
+    position: relative;
+    top: 1px;
+    margin-right: 5px;
+}

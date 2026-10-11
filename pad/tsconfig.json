@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", "module": "ESNext", "moduleResolution": "Bundler", "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker.ImportScripts"],
+    "strict": false, "noEmit": true, "skipLibCheck": true, "allowJs": false, "isolatedModules": true,
+    "ignoreDeprecations": "6.0", "baseUrl": ".",
+    "paths": {
+      "@codemirror/state": ["../../deps/state/src/index.ts"],
+      "@codemirror/view": ["../../deps/view/src/index.ts"],
+      "@codemirror/language": ["../../deps/language/src/index.ts"],
+      "@codemirror/commands": ["../../deps/commands/src/commands.ts"],
+      "@codemirror/autocomplete": ["../../deps/autocomplete/src/index.ts"],
+      "@codemirror/lint": ["../../deps/lint/src/lint.ts"],
+      "@lezer/common": ["../../deps/common/src/index.ts"],
+      "@lezer/highlight": ["../../deps/highlight/src/highlight.ts"],
+      "@lezer/lr": ["../../deps/lr/src/index.ts"],
+      "@marijn/find-cluster-break": ["../../deps/find-cluster-break/src/index.d.ts"],
+      "style-mod": ["../../deps/style-mod/src/style-mod.d.ts"],
+      "w3c-keyname": ["../../deps/w3c-keyname/index.d.ts"],
+      "crelt": ["../../deps/crelt/index.d.ts"],
+      "monaco-editor": ["src/monaco-shim.ts"]
+    }
+  },
+  "include": ["src/main.ts"]
+}
