@@ -1,0 +1,16 @@
+{
+  "name": "SQL-IDE",
+  "short_name": "SQL-IDE",
+  "description": "SQL-Datenbanken im Browser erstellen und testen – für den Informatikunterricht",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#1f5fbf",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

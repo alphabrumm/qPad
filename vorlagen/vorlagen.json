@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Benutzer und Bücher",
+    "description": "kleine Bibliotheksdatenbank",
+    "file": "benutzer_buch.sqLite"
+  },
+  {
+    "name": "Chinook (Musikshop)",
+    "description": "Künstler, Alben, Titel, Kunden, Rechnungen",
+    "file": "chinook.sqLite"
+  },
+  {
+    "name": "Schule",
+    "description": "Schüler, Klassen, Lehrkräfte, Fächer",
+    "file": "schule1.sqLite"
+  },
+  {
+    "name": "Terra (Geographie)",
+    "description": "Länder, Städte, Flüsse, Berge",
+    "file": "terra.sqLite"
+  },
+  {
+    "name": "World",
+    "description": "Länder, Städte und Sprachen der Welt",
+    "file": "world1.sqLite"
+  }
+]
