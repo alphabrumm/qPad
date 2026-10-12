@@ -61,7 +61,7 @@ export class SqlEditor {
             bracketMatching(),
             closeBrackets(),
             sqlLanguage,
-            autocompletion({ override: [makeCompletionSource(() => this.module)], icons: false, activateOnTypingDelay: 150 }),
+            autocompletion({ override: [makeCompletionSource(() => this.upToDateModule(), () => this.db.databaseStructure)], icons: false, activateOnTypingDelay: 150 }),
             lintGutter(),
             statementMarks,
             keymap.of([...runKeys, ...closeBracketsKeymap, ...completionKeymap, ...defaultKeymap, ...historyKeymap, indentWithTab]),
@@ -91,6 +91,13 @@ export class SqlEditor {
     }
 
     getText(): string { return this.view.state.doc.toString(); }
+
+    /** Für die Vervollständigung: immer zum aktuellen Text passend übersetzen (ohne Anzeige zu ändern) */
+    upToDateModule(): PadModule | null {
+        const text = this.getText();
+        if (this.module == null || this.module.text != text) this.module = compile(text, this.db);
+        return this.module;
+    }
 
     createState(text: string): EditorState {
         return EditorState.create({ doc: text, extensions: this.extensions });

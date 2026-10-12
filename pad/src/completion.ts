@@ -2,29 +2,18 @@
  * Kontextsensitive Code-Vervollständigung – Portierung von src/client/main/gui/MyCompletionItemProvider.ts
  * auf CodeMirror 6. Grundlage sind die "CompletionHints", die Parser und SymbolResolver der SQL-IDE erzeugen.
  */
-import { Completion, CompletionContext, CompletionResult, snippetCompletion } from "@codemirror/autocomplete";
+import { Completion, CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { TokenType } from "../../src/client/compiler/lexer/Token.js";
 import type { Symbol, SymbolTable } from "../../src/client/compiler/parser/SymbolTable.js";
+import type { DatabaseStructure } from "./db.js";
 import type { CompletionHint, PadModule } from "./module.js";
 
-const statementTemplates: { [kw: string]: Completion } = {
-    "SELECT": snippetCompletion("select ${} from ${}\nwhere ${};", { label: "select … from … where …", detail: "Abfrage", type: "keyword", boost: 10 }),
-    "CREATE TABLE": snippetCompletion("create table ${name} (\n\t${}\n);", { label: "create table …", detail: "neue Tabelle", type: "keyword" }),
-    "DELETE FROM": snippetCompletion("delete from ${} where ${};", { label: "delete from … where …", detail: "Datensätze löschen", type: "keyword" }),
-    "DROP TABLE": snippetCompletion("drop table ${};", { label: "drop table …", detail: "Tabelle löschen", type: "keyword" }),
-    "ALTER TABLE": snippetCompletion("alter table ${} ", { label: "alter table …", detail: "Schema ändern", type: "keyword" }),
-    "INSERT INTO": snippetCompletion("insert into ${} (${}) values (${});", { label: "insert into … values …", detail: "Datensatz einfügen", type: "keyword" }),
-    "UPDATE": snippetCompletion("update ${} set ${} where ${};", { label: "update … set … where …", detail: "Datensätze ändern", type: "keyword" }),
-    "CREATE VIEW": snippetCompletion("create view ${name} as\nselect ${};", { label: "create view …", detail: "Sicht anlegen", type: "keyword" }),
-};
+/*
+ * Vervollständigt werden nur einzelne Wörter: Schlüsselwörter, Tabellen und Spalten.
+ * Bewusst KEINE Gerüste wie „select … from … where …“ – Enter soll nie mehr einfügen als das Wort.
+ */
 
-const keywordSnippets: { [kw: string]: Completion } = {
-    "(": snippetCompletion("(\n\t${}\n)", { label: "( … )", type: "keyword" }),
-    "VARCHAR": snippetCompletion("varchar(${}) ", { label: "varchar(…)", type: "type" }),
-    "DECIMAL": snippetCompletion("decimal(${}, ${}) ", { label: "decimal(…, …)", type: "type" }),
-};
-
-export function makeCompletionSource(getModule: () => PadModule | null) {
+export function makeCompletionSource(getModule: () => PadModule | null, getStructure: () => DatabaseStructure | null) {
     return (context: CompletionContext): CompletionResult | null => {
         const module = getModule();
         if (module == null || module.mainSymbolTable == null) return null;
@@ -38,14 +27,15 @@ export function makeCompletionSource(getModule: () => PadModule | null) {
 
         const word = context.matchBefore(/[\wäöüÄÖÜß]*/);
         const dotMatch = context.matchBefore(/[\wäöüÄÖÜß]+\.[\wäöüÄÖÜß]*/);
-        if (!context.explicit && word && word.from == word.to && !dotMatch) {
-            // nur nach Leerzeichen/Komma/Klammer automatisch öffnen, wenn es einen passenden Hinweis gibt
-            const before = line.text.substring(0, column - 1);
-            if (!/[\s,(]$/.test(before)) return null;
-        }
+        // Automatisch erst öffnen, wenn ein Buchstabe oder ein Punkt getippt wurde
+        // (sonst würde Enter nach einem Leerzeichen einen Vorschlag statt eines Zeilenumbruchs einfügen).
+        if (!context.explicit && word.from == word.to && !dotMatch) return null;
 
         const symbolTable: SymbolTable = module.mainSymbolTable.findTableAtPosition(lineNumber, column);
-        const hint: CompletionHint = module.getCompletionHint(lineNumber, column) ?? {
+        // Steht vor dem Wort schon etwas (z. B. „select “), gilt nicht mehr der Hinweis für den Anweisungsbeginn
+        const textBefore = context.state.sliceDoc(0, word.from);
+        const atStatementStart = /(^|;)\s*$/.test(textBefore);
+        const hint: CompletionHint = pickHint(module, lineNumber, column, atStatementStart) ?? {
             fromColumn: 0, toColumn: 0, fromLine: 0, toLine: 0, hintColumns: false, hintTables: false, hintKeywords: []
         };
 
@@ -53,23 +43,30 @@ export function makeCompletionSource(getModule: () => PadModule | null) {
 
         if (dotMatch) {
             const [before] = dotMatch.text.split(".");
-            addDotCompletions(before.toLowerCase(), symbolTable, options);
+            addDotCompletions(before.toLowerCase(), symbolTable, getStructure(), options);
             if (options.length == 0) return null;
             return { from: dotMatch.from + before.length + 1, options, validFor: /^[\wäöüÄÖÜß]*$/ };
         }
 
         addKeywordCompletions(hint, options);
         addIdentifierCompletions(hint, symbolTable, options);
+        // Alle Tabellen der Datenbank anbieten – auch wenn (noch) kein „from“ dasteht, z. B. direkt nach „select“
+        if (hint.hintTables || hint.hintColumns || hint.hintKeywords == null || hint.hintKeywords.length == 0) {
+            addDatabaseTables(getStructure(), hint, options);
+        }
 
         if (hint.dontHint != null) options = options.filter(o => hint.dontHint.indexOf((o.apply as string) ?? o.label) < 0);
         if (options.length == 0) return null;
-        if (!context.explicit && word.from == word.to && options.length > 60) return null;
+
+        // Steht das Wort schon vollständig da, kein Popup: Enter erzeugt dann einen Zeilenumbruch
+        const typed = word.text.toLowerCase();
+        if (!context.explicit && typed.length > 0 && options.some(o => o.label.toLowerCase() == typed)) return null;
 
         return { from: word.from, options, validFor: /^[\wäöüÄÖÜß]*$/ };
     };
 }
 
-function addDotCompletions(textBeforeDot: string, symbolTable: SymbolTable, options: Completion[]) {
+function addDotCompletions(textBeforeDot: string, symbolTable: SymbolTable, structure: DatabaseStructure | null, options: Completion[]) {
     let st = symbolTable;
     while (st != null) {
         for (const symbol of st.symbolList) {
@@ -83,6 +80,42 @@ function addDotCompletions(textBeforeDot: string, symbolTable: SymbolTable, opti
             }
         }
         st = st.parent;
+    }
+    // Tabelle steht noch nicht im from-Teil (z. B. „select fluss.“): Spalten aus der Datenbank nehmen
+    const table = structure?.tables.find(t => t.name.toLowerCase() == textBeforeDot);
+    if (table) {
+        for (const c of table.columns) {
+            options.push({ label: c.name, detail: "Spalte von " + table.name, type: "property" });
+        }
+    }
+}
+
+const isStatementStartHint = (h: CompletionHint) => h.hintKeywords != null && h.hintKeywords.includes("SELECT") && h.hintKeywords.includes("INSERT INTO");
+
+/** Wie Module.getCompletionHint (kleinster passender Bereich), aber Anweisungsbeginn-Hinweise nur am Anweisungsbeginn */
+function pickHint(module: PadModule, line: number, column: number, atStatementStart: boolean): CompletionHint | null {
+    const pos = line * 1000 + column;
+    let list = (module.completionHints.get(line) ?? [])
+        .filter(ch => pos >= ch.fromLine * 1000 + ch.fromColumn && pos <= ch.toLine * 1000 + ch.toColumn);
+    if (!atStatementStart && list.some(h => !isStatementStartHint(h))) list = list.filter(h => !isStatementStartHint(h));
+    let best: CompletionHint | null = null, bestLen = Infinity;
+    for (const ch of list) {
+        const len = (ch.toLine - ch.fromLine) * 1000 + (ch.toColumn - ch.fromColumn);
+        if (len < bestLen) { best = ch; bestLen = len; }
+    }
+    return best;
+}
+
+function addDatabaseTables(structure: DatabaseStructure | null, hint: CompletionHint, options: Completion[]) {
+    if (!structure) return;
+    const present = new Set(options.filter(o => o.type == "class").map(o => o.label.toLowerCase()));
+    const praefix = hint.praefix ?? "", suffix = hint.suffix ?? "";
+    for (const t of structure.tables) {
+        if (t.name.startsWith("sqlite_") || present.has(t.name.toLowerCase())) continue;
+        options.push({
+            label: t.name, apply: praefix + t.name + suffix,
+            detail: t.type == "view" ? "Sicht" : "Tabelle", type: "class", boost: 2
+        });
     }
 }
 
@@ -136,8 +169,7 @@ function addKeywordCompletions(hint: CompletionHint, options: Completion[]) {
     if (hint.hintKeywords == null) return;
     const praefix = hint.praefix ?? "", suffix = hint.suffix ?? "";
     for (const kw of hint.hintKeywords) {
-        const tpl = statementTemplates[kw] ?? keywordSnippets[kw];
-        if (tpl) { options.push(tpl); continue; }
+        if (!/^[A-Za-z]/.test(kw)) continue;   // „(“, „*“ usw. nicht vorschlagen
         const text = kw.toLowerCase();
         options.push({ label: text, apply: praefix + text + suffix, type: "keyword", boost: text == "from" ? 5 : 0 });
     }
