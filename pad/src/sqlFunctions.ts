@@ -1,7 +1,11 @@
 // Übernommen aus src/client/sqljs-worker/sqljsWorker.ts (SQL-IDE, Martin Pabst): Zusatzfunktionen für SQLite
 export function createDb(SQL: any, buffer: any) {
-
     const db = new SQL.Database(buffer);
+    return registerFunctions(db);
+}
+
+/** Muss auch nach db.export() erneut aufgerufen werden: sql.js öffnet die Datenbank dabei neu und vergisst eigene Funktionen. */
+export function registerFunctions(db: any) {
 
     db.create_function("isDate", function (inputText) {
 

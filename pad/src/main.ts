@@ -14,6 +14,7 @@ import {
     lastProjectId, LocalStore, newProject, Project, rememberLastProject, safeFileName, serializeProject
 } from "./project.js";
 import { highlightToHtml } from "./sqlLanguage.js";
+import { helpFor } from "./symbolHelp.js";
 import { translateSqliteError } from "./translate.js";
 import { icon } from "./icons.js";
 
@@ -899,14 +900,114 @@ class App {
             const b = document.createElement("button");
             b.className = cls;
             b.textContent = label.replace("|", "");
+            const hasHelp = helpFor(label) != null;
+            if (hasHelp) b.title = "Antippen: einfügen · Lange drücken: Hilfe";
+            // Lange drücken (1 s) öffnet die Kurzhilfe, kurzes Tippen fügt ein
+            let timer: any = null, longPressed = false, sx = 0, sy = 0;
+            const cancel = () => { clearTimeout(timer); timer = null; b.classList.remove("holding"); };
             // Fokus im Editor behalten (sonst klappt die Bildschirmtastatur zu)
-            b.addEventListener("pointerdown", e => e.preventDefault());
+            b.addEventListener("pointerdown", e => {
+                e.preventDefault();
+                longPressed = false;
+                if (!hasHelp || e.button > 0) return;
+                sx = e.clientX; sy = e.clientY;
+                cancel();
+                b.classList.add("holding");
+                timer = setTimeout(() => {
+                    timer = null; longPressed = true; b.classList.remove("holding");
+                    this.showSymbolHelp(label, b);
+                }, 1000);
+            });
+            b.addEventListener("pointermove", e => { if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 12) cancel(); });
+            for (const ev of ["pointerup", "pointercancel", "pointerleave"]) b.addEventListener(ev, cancel);
             b.addEventListener("mousedown", e => e.preventDefault());
-            b.onclick = () => this.editor.insert(label);
+            b.addEventListener("contextmenu", e => e.preventDefault());
+            b.onclick = () => {
+                if (longPressed) { longPressed = false; return; }
+                this.editor.insert(label);
+            };
             bar.appendChild(b);
         };
         symbols.forEach(s => add(s, "sym"));
         words.forEach(w => add(w, "kw"));
+        bar.addEventListener("scroll", () => this.hideSymbolHelp(), { passive: true });
+    }
+
+    private symHelpEl: HTMLElement | null = null;
+
+    /** Kurzhilfe zu einem Button der Symbolleiste: Erklärung + einfaches und anspruchsvolleres Beispiel */
+    showSymbolHelp(label: string, anchor: HTMLElement) {
+        const found = helpFor(label);
+        if (!found) return;
+        const { key, help } = found;
+        this.hideSymbolHelp();
+        const pop = document.createElement("div");
+        pop.className = "symhelp";
+        pop.setAttribute("role", "dialog");
+        pop.setAttribute("aria-label", `Hilfe zu ${key}`);
+        const title = help.kind == "Funktion" ? `${key}(…)` : key == "''" ? "' … '" : key;
+        const example = (caption: string, sql: string, i: number) => `
+            <div class="symhelp-ex">
+                <div class="symhelp-ex-head"><span>${caption}</span>
+                    <button class="symhelp-insert" data-ex="${i}" title="Beispiel in den Editor übernehmen">Einfügen</button></div>
+                <pre class="symhelp-code">${highlightToHtml(sql)}</pre>
+            </div>`;
+        pop.innerHTML = `
+            <div class="symhelp-head">
+                <code class="symhelp-title">${esc(title)}</code>
+                <span class="symhelp-kind">${help.kind}</span>
+                <span class="spacer"></span>
+                <button class="symhelp-close iconbtn small" aria-label="Hilfe schließen">✕</button>
+            </div>
+            <p class="symhelp-text">${esc(help.text)}</p>
+            ${example("Einfaches Beispiel", help.simple, 0)}
+            ${example("Etwas anspruchsvoller", help.advanced, 1)}
+            ${help.note ? `<p class="symhelp-note">${esc(help.note)}</p>` : ""}
+            <p class="symhelp-foot">Die Beispiele passen zur Vorlage „Terra (Geographie)“.</p>`;
+        // Buttons im Popup sollen den Editor-Fokus nicht stehlen
+        pop.querySelectorAll("button").forEach(btn => {
+            btn.addEventListener("pointerdown", e => e.preventDefault());
+            btn.addEventListener("mousedown", e => e.preventDefault());
+        });
+        (pop.querySelector(".symhelp-close") as HTMLElement).onclick = () => this.hideSymbolHelp();
+        pop.querySelectorAll<HTMLElement>(".symhelp-insert").forEach(btn => btn.onclick = () => {
+            this.editor.insertBlock(btn.dataset.ex == "0" ? help.simple : help.advanced);
+            this.hideSymbolHelp();
+            this.toast("Beispiel eingefügt – mit ▶ Ausführen kannst Du es testen.");
+        });
+        document.body.appendChild(pop);
+        this.symHelpEl = pop;
+
+        // unter (oder notfalls über) dem Button platzieren
+        const r = anchor.getBoundingClientRect();
+        const vw = document.documentElement.clientWidth, vh = window.visualViewport?.height ?? window.innerHeight;
+        const w = pop.offsetWidth, h = pop.offsetHeight;
+        const left = Math.max(8, Math.min(vw - w - 8, r.left + r.width / 2 - w / 2));
+        let top = r.bottom + 8;
+        if (top + h > vh - 8 && r.top - 8 - h >= 8) top = r.top - 8 - h;
+        pop.style.left = left + "px";
+        pop.style.top = Math.max(8, top) + "px";
+        pop.style.setProperty("--arrow-x", Math.max(16, Math.min(w - 16, r.left + r.width / 2 - left)) + "px");
+        pop.classList.toggle("above", top < r.top);
+
+        const outside = (e: Event) => { if (!pop.contains(e.target as Node)) this.hideSymbolHelp(); };
+        const key_ = (e: KeyboardEvent) => { if (e.key == "Escape") this.hideSymbolHelp(); };
+        setTimeout(() => {
+            document.addEventListener("pointerdown", outside, true);
+            document.addEventListener("keydown", key_, true);
+        }, 0);
+        (pop as any)._cleanup = () => {
+            document.removeEventListener("pointerdown", outside, true);
+            document.removeEventListener("keydown", key_, true);
+        };
+    }
+
+    hideSymbolHelp() {
+        const pop = this.symHelpEl;
+        if (!pop) return;
+        (pop as any)._cleanup?.();
+        pop.remove();
+        this.symHelpEl = null;
     }
 
     bindUi() {

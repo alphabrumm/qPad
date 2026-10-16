@@ -139,6 +139,24 @@ export class SqlEditor {
         view.focus();
     }
 
+    /** Ganze Anweisung (z. B. Hilfe-Beispiel) in eine eigene Zeile hinter der aktuellen Zeile einfügen */
+    insertBlock(sql: string) {
+        const view = this.view;
+        const state = view.state;
+        const line = state.doc.lineAt(state.selection.main.head);
+        const empty = line.text.trim() == "";
+        const from = empty ? line.from : line.to;
+        const to = empty ? line.to : line.to;
+        const insert = (empty ? "" : "\n") + sql;
+        // Cursor in die Anweisung setzen, damit „▶ Ausführen“ genau sie ausführt
+        view.dispatch({
+            changes: { from, to, insert },
+            selection: EditorSelection.cursor(from + insert.length - (sql.endsWith(";") ? 1 : 0)),
+            scrollIntoView: true, userEvent: "input"
+        });
+        view.focus();
+    }
+
     scheduleCompile() {
         clearTimeout(this.compileTimer);
         this.compileTimer = setTimeout(() => this.compileNow(), 250);

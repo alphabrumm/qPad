@@ -3,7 +3,7 @@
  * Protokoll: { id, action: "open" | "exec" | "export", buffer?, sql? } -> { id, results? , buffer?, error? }
  * Die SQL-Hilfsfunktionen (isDate, month, concat, ...) stammen unverändert aus der SQL-IDE.
  */
-import { createDb } from "./sqlFunctions.js";
+import { createDb, registerFunctions } from "./sqlFunctions.js";
 
 declare function importScripts(...urls: string[]): void;
 declare function initSqlJs(config: any): Promise<any>;
@@ -29,8 +29,9 @@ self.onmessage = async (event: MessageEvent) => {
                 break;
             case "export": {
                 const buffer: Uint8Array = db.export();
-                // export() schaltet foreign keys aus -> wieder einschalten
+                // export() öffnet die DB neu: foreign keys und eigene Funktionen (isDate, …) gehen verloren
                 try { db.exec("PRAGMA foreign_keys = ON;"); } catch (e) { }
+                registerFunctions(db);
                 (self as any).postMessage({ id: data.id, buffer }, [buffer.buffer]);
                 break;
             }

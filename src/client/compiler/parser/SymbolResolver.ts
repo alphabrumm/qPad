@@ -246,7 +246,7 @@ export class SymbolResolver {
                     let tables = this.getCurrentSymbolTable().findTables(fki.referencesTable);
                     if (tables.length == 1) {
                         let table = tables[0].table;
-                        let column = table.columns.find(c => c.identifier == fki.referencesColumn);
+                        let column = table.columns.find(c => c.identifier?.toLowerCase() == fki.referencesColumn?.toLowerCase());
                         if (column != null && column.type != null) {
                             if (!column.isPrimaryKey) {
                                 this.pushError("Die referenzierte Spalte " + fki.referencesTable + "." + fki.referencesColumn + " ist kein Primärschlüssel.", "warning", columnNode.referencesPosition);
@@ -289,7 +289,7 @@ export class SymbolResolver {
                 let value = node.values[i];
     
                 if (ci == null) continue;
-                let column = table.columns.find(c => c.identifier == ci);
+                let column = table.columns.find(c => c.identifier?.toLowerCase() == ci?.toLowerCase());
     
                 if (column == null) {
                     this.pushError(ci + " ist kein Bezeichner einer Spalte der Tabelle " + node.tableIdentifier + ".", "error", ciPos);
@@ -357,7 +357,7 @@ export class SymbolResolver {
                 let tables = this.getCurrentSymbolTable().findTables(fki.referencesTable);
                 if (tables.length == 1) {
                     let table = tables[0].table;
-                    let column = table.columns.find(c => c.identifier == fki.referencesColumn);
+                    let column = table.columns.find(c => c.identifier?.toLowerCase() == fki.referencesColumn?.toLowerCase());
                     if (column != null && column.type != null) {
                         if (!column.isPrimaryKey) {
                             this.pushError("Die referenzierte Spalte " + fki.referencesTable + "." + fki.referencesColumn + " ist kein Primärschlüssel.", "warning", columnNode.referencesPosition);
@@ -381,7 +381,7 @@ export class SymbolResolver {
             let tables = this.getCurrentSymbolTable().findTables(fki.referencesTable);
             if (tables.length == 1) {
                 let table = tables[0].table;
-                let column = table.columns.find(c => c.identifier == fki.referencesColumn);
+                let column = table.columns.find(c => c.identifier?.toLowerCase() == fki.referencesColumn?.toLowerCase());
                 if (column != null && column.type != null) {
                     if (!column.isPrimaryKey) {
                         this.pushError("Die referenzierte Spalte " + fki.referencesTable + "." + fki.referencesColumn + " ist kein Primärschlüssel.", "warning", fki.referencesPosition);
