@@ -2,7 +2,8 @@
  * Kontextsensitive Code-Vervollständigung – Portierung von src/client/main/gui/MyCompletionItemProvider.ts
  * auf CodeMirror 6. Grundlage sind die "CompletionHints", die Parser und SymbolResolver der SQL-IDE erzeugen.
  */
-import { Completion, CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { Completion, CompletionContext, CompletionResult, insertCompletionText, pickedCompletion } from "@codemirror/autocomplete";
+import type { EditorView } from "@codemirror/view";
 import { TokenType } from "../../src/client/compiler/lexer/Token.js";
 import type { Symbol, SymbolTable } from "../../src/client/compiler/parser/SymbolTable.js";
 import type { DatabaseStructure } from "./db.js";
@@ -45,13 +46,15 @@ export function makeCompletionSource(getModule: () => PadModule | null, getStruc
             const [before] = dotMatch.text.split(".");
             addDotCompletions(before.toLowerCase(), symbolTable, getStructure(), options);
             if (options.length == 0) return null;
-            return { from: dotMatch.from + before.length + 1, options, validFor: /^[\wäöüÄÖÜß]*$/ };
+            return { from: dotMatch.from + before.length + 1, options: options.map(withSpaceIfWanted), validFor: /^[\wäöüÄÖÜß]*$/ };
         }
 
         addKeywordCompletions(hint, options);
         addIdentifierCompletions(hint, symbolTable, options);
         // Alle Tabellen der Datenbank anbieten – auch wenn (noch) kein „from“ dasteht, z. B. direkt nach „select“
-        if (hint.hintTables || hint.hintColumns || hint.hintKeywords == null || hint.hintKeywords.length == 0) {
+        // – aber nur, wenn noch keine Spalten passen (sonst würden z. B. nach „where“ fremde Tabellen vor den Spalten stehen)
+        const columnsOffered = options.some(o => o.type == "property");
+        if (!columnsOffered && (hint.hintTables || hint.hintColumns || hint.hintKeywords == null || hint.hintKeywords.length == 0)) {
             addDatabaseTables(getStructure(), hint, options);
         }
 
@@ -62,7 +65,48 @@ export function makeCompletionSource(getModule: () => PadModule | null, getStruc
         const typed = word.text.toLowerCase();
         if (!context.explicit && typed.length > 0 && options.some(o => o.label.toLowerCase() == typed)) return null;
 
+        // Nur Schlüsselwörter (select, from, where, as, …): nach dem Einfügen ein Leerzeichen,
+        // damit man direkt weiterschreiben kann. Tabellen und Spalten bleiben ohne Leerzeichen.
+        options = options.map(o => o.type == "keyword" ? withTrailingSpace(o) : o);
+
+        options = options.map(withSpaceIfWanted);
         return { from: word.from, options, validFor: /^[\wäöüÄÖÜß]*$/ };
+    };
+}
+
+/**
+ * Schlüsselwörter (select, from, where, as, …) und Spalten bekommen nach dem Einfügen ein Leerzeichen,
+ * damit man direkt weiterschreiben kann. Tabellen bleiben ohne Leerzeichen.
+ */
+function withSpaceIfWanted(o: Completion): Completion {
+    if (o.type != "keyword" && o.type != "property") return o;
+    const text = typeof o.apply == "string" ? o.apply : o.label;
+    return {
+        ...o,
+        apply: (view: EditorView, _c: Completion, from: number, to: number) => {
+            const next = view.state.sliceDoc(to, to + 1);
+            const insert = /^\s$/.test(next) || text.endsWith(" ") ? text : text + " ";   // kein doppeltes Leerzeichen
+            view.dispatch({
+                ...insertCompletionText(view.state, insert, from, to),
+                annotations: pickedCompletion.of(o)
+            });
+        }
+    };
+}
+
+/** Fügt den Vorschlag ein und setzt dahinter ein Leerzeichen – außer es folgt schon eins */
+function withTrailingSpace(o: Completion): Completion {
+    const text = typeof o.apply == "string" ? o.apply : o.label;
+    return {
+        ...o,
+        apply: (view: EditorView, _c: Completion, from: number, to: number) => {
+            const next = view.state.sliceDoc(to, to + 1);
+            const insert = /^\s$/.test(next) || text.endsWith(" ") ? text : text + " ";
+            view.dispatch({
+                ...insertCompletionText(view.state, insert, from, to),
+                annotations: pickedCompletion.of(o)
+            });
+        }
     };
 }
 
