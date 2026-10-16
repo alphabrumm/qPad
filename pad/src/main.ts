@@ -909,7 +909,7 @@ class App {
             pop.innerHTML = `
                 <div class="symhelp-info-row">
                     <span class="symhelp-info-icon">${bulb.innerHTML}</span>
-                    <p>Weißt Du nicht, was ein Button in der Funktionsleiste bewirkt? Lege einfach für eine Sekunde Deinen Finger auf die Funktion, um Hilfe zu bekommen.</p>
+                    <p>Weißt Du nicht, was ein Button in der Funktionsleiste bewirkt? Lege einfach eine halbe Sekunde lang Deinen Finger auf die Funktion, um Hilfe zu bekommen.</p>
                     <button class="symhelp-close iconbtn small" aria-label="Hinweis schließen">✕</button>
                 </div>`;
             this.openPopover(pop, bulb);
@@ -924,7 +924,7 @@ class App {
             b.textContent = label.replace("|", "");
             const hasHelp = helpFor(label) != null;
             if (hasHelp) b.title = "Antippen: einfügen · Lange drücken: Hilfe";
-            // Lange drücken (1 s) öffnet die Kurzhilfe, kurzes Tippen fügt ein
+            // Lange drücken (0,5 s) öffnet die Kurzhilfe, kurzes Tippen fügt ein
             let timer: any = null, longPressed = false, sx = 0, sy = 0;
             const cancel = () => { clearTimeout(timer); timer = null; b.classList.remove("holding"); };
             // Fokus im Editor behalten (sonst klappt die Bildschirmtastatur zu)
@@ -938,7 +938,7 @@ class App {
                 timer = setTimeout(() => {
                     timer = null; longPressed = true; b.classList.remove("holding");
                     this.showSymbolHelp(label, b);
-                }, 1000);
+                }, 500);
             });
             b.addEventListener("pointermove", e => { if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 12) cancel(); });
             for (const ev of ["pointerup", "pointercancel", "pointerleave"]) b.addEventListener(ev, cancel);

@@ -204,7 +204,7 @@ code { font-family: var(--mono); font-size: .9em; }
 /* Fortschrittsbalken beim langen Drücken (erst nach kurzer Verzögerung sichtbar) */
 .symbolbar button.holding::after {
     content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--accent);
-    transform-origin: left; transform: scaleX(0); animation: qp-hold .8s linear .2s forwards;
+    transform-origin: left; transform: scaleX(0); animation: qp-hold .4s linear .1s forwards;
 }
 @keyframes qp-hold { to { transform: scaleX(1); } }
 
