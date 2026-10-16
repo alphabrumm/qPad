@@ -90,6 +90,7 @@ class App {
     async setProject(p: Project) {
         this.project = p;
         this.dbUndo = [];
+        this.updateUndoButtons();
         this.states = p.scripts.map(() => null);
         this.showWait("Datenbank wird geöffnet …");
         try {
@@ -331,7 +332,7 @@ class App {
         } else if (statements.some(isModifying)) {
             this.dbUndo.pop();
         }
-        $("#btnDbUndo").classList.toggle("disabled", this.dbUndo.length == 0);
+        this.updateUndoButtons();
 
         const ms = Math.round(performance.now() - t0);
         this.showResults(out, [], ms);
@@ -448,15 +449,21 @@ class App {
         this.closeSidebarIfOverlay();
     }
 
+    updateUndoButtons() {
+        const empty = this.dbUndo.length == 0;
+        $("#btnDbUndo").classList.toggle("disabled", empty);
+        ($("#drawerDbUndo") as HTMLButtonElement).disabled = empty;
+    }
+
     async undoDatabase() {
         const snap = this.dbUndo.pop();
-        if (!snap) { this.toast("Es gibt keine Datenbankänderung, die rückgängig gemacht werden kann."); return; }
+        if (!snap) { this.toast("Es gibt noch keine Datenänderung (insert, update, delete, create …), die rückgängig gemacht werden kann."); return; }
         await this.db.open(snap);
         await this.flushDatabase();
         this.renderSchema();
         this.editor.compileNow();
         this.touch();
-        $("#btnDbUndo").classList.toggle("disabled", this.dbUndo.length == 0);
+        this.updateUndoButtons();
         this.toast("Die letzte Datenbankänderung wurde rückgängig gemacht.");
     }
 
@@ -468,7 +475,7 @@ class App {
         this.renderSchema();
         this.editor.compileNow();
         this.touch();
-        $("#btnDbUndo").classList.remove("disabled");
+        this.updateUndoButtons();
         this.toast("Die Datenbank wurde zurückgesetzt.");
     }
 
@@ -687,7 +694,8 @@ class App {
     }
 
     async useDatabase(data: Uint8Array, name: string, errors: string[]) {
-        this.dbUndo.push(await this.db.export());
+        // Eine neu geladene Datenbank ersetzt alles – die Datenschritte davor gelten nicht mehr
+        this.dbUndo = [];
         await this.db.open(data);
         this.project.template = data.slice();
         this.project.templateName = name;
@@ -695,7 +703,7 @@ class App {
         this.renderSchema();
         this.editor.compileNow();
         this.touch();
-        $("#btnDbUndo").classList.remove("disabled");
+        this.updateUndoButtons();
         if (errors.length > 0) {
             console.warn(errors);
             alert(`Beim Import sind ${errors.length} Fehler aufgetreten. Die übrigen Daten wurden übernommen.\n\nErster Fehler:\n${errors[0]}`);
@@ -885,7 +893,7 @@ class App {
         const bar = $("#symbolbar");
         const symbols = [";", ",", "(", ")", "*", "=", "<", ">", "<>", "'|'", ".", "_", "%"];
         const words = ["select", "from", "where", "and", "or", "not", "join", "on", "as", "group by", "having", "order by", "desc",
-            "count(|)", "sum(|)", "avg(|)", "min(|)", "max(|)", "distinct", "like", "in", "between", "is null", "limit",
+            "count(|)", "sum(|)", "avg(|)", "min(|)", "max(|)", "length(|)", "distinct", "like", "in", "between", "is null", "limit",
             "insert into", "values", "update", "set", "delete from", "create table", "primary key", "references", "integer", "varchar(|)"];
         const add = (label: string, cls: string) => {
             const b = document.createElement("button");

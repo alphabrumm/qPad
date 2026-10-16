@@ -5,6 +5,7 @@
 import { Completion, CompletionContext, CompletionResult, insertCompletionText, pickedCompletion } from "@codemirror/autocomplete";
 import type { EditorView } from "@codemirror/view";
 import { TokenType } from "../../src/client/compiler/lexer/Token.js";
+import { SQLMethodStore } from "../../src/client/compiler/parser/SQLMethods.js";
 import type { Symbol, SymbolTable } from "../../src/client/compiler/parser/SymbolTable.js";
 import type { DatabaseStructure } from "./db.js";
 import type { CompletionHint, PadModule } from "./module.js";
@@ -52,6 +53,8 @@ export function makeCompletionSource(getModule: () => PadModule | null, getStruc
         addKeywordCompletions(hint, options);
         addIdentifierCompletions(hint, symbolTable, options);
         // Alle Tabellen der Datenbank anbieten – auch wenn (noch) kein „from“ dasteht, z. B. direkt nach „select“
+        // Funktionen (length, upper, round …) überall dort, wo eine Spalte stehen kann
+        if (hint.hintColumns) addFunctionCompletions(options);
         // – aber nur, wenn noch keine Spalten passen (sonst würden z. B. nach „where“ fremde Tabellen vor den Spalten stehen)
         const columnsOffered = options.some(o => o.type == "property");
         if (!columnsOffered && (hint.hintTables || hint.hintColumns || hint.hintKeywords == null || hint.hintKeywords.length == 0)) {
@@ -78,6 +81,33 @@ export function makeCompletionSource(getModule: () => PadModule | null, getStruc
  * Schlüsselwörter (select, from, where, as, …) und Spalten bekommen nach dem Einfügen ein Leerzeichen,
  * damit man direkt weiterschreiben kann. Tabellen bleiben ohne Leerzeichen.
  */
+/** Kurzbeschreibungen für die Funktionen des SQL-IDE-Compilers (src/client/compiler/parser/SQLMethods.ts) */
+const FUNCTION_INFO: { [name: string]: string } = {
+    count: "Anzahl der Datensätze", sum: "Summe", avg: "Durchschnitt", min: "kleinster Wert", max: "größter Wert",
+    length: "Länge eines Textes", upper: "Text in GROSSBUCHSTABEN", lower: "Text in kleinbuchstaben", concat: "Texte verbinden",
+    abs: "Betrag", round: "runden (auch round(x, Stellen))", sin: "Sinus", cos: "Kosinus", tan: "Tangens",
+    day: "Tag eines Datums", month: "Monat eines Datums", year: "Jahr eines Datums", strftime: "Datum formatieren",
+};
+
+function addFunctionCompletions(options: Completion[]) {
+    const names = [...new Set(SQLMethodStore.getInstance().methods.map(m => m.identifier))].sort();
+    for (const name of names) {
+        options.push({
+            label: name + "()", type: "function", detail: FUNCTION_INFO[name] ?? "Funktion", boost: 1,
+            // Name und Klammern einfügen, Cursor zwischen die Klammern setzen
+            apply: (view: EditorView, c: Completion, from: number, to: number) => {
+                const hasParen = view.state.sliceDoc(to, to + 1) == "(";
+                const insert = hasParen ? name : name + "()";
+                view.dispatch({
+                    ...insertCompletionText(view.state, insert, from, to),
+                    selection: { anchor: from + name.length + 1 },
+                    annotations: pickedCompletion.of(c)
+                });
+            }
+        });
+    }
+}
+
 function withSpaceIfWanted(o: Completion): Completion {
     if (o.type != "keyword" && o.type != "property") return o;
     const text = typeof o.apply == "string" ? o.apply : o.label;
@@ -85,7 +115,8 @@ function withSpaceIfWanted(o: Completion): Completion {
         ...o,
         apply: (view: EditorView, _c: Completion, from: number, to: number) => {
             const next = view.state.sliceDoc(to, to + 1);
-            const insert = /^\s$/.test(next) || text.endsWith(" ") ? text : text + " ";   // kein doppeltes Leerzeichen
+            // kein doppeltes Leerzeichen und keins vor einer schließenden Klammer: length(name)
+            const insert = /^[\s)]$/.test(next) || text.endsWith(" ") ? text : text + " ";
             view.dispatch({
                 ...insertCompletionText(view.state, insert, from, to),
                 annotations: pickedCompletion.of(o)
