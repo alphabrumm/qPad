@@ -892,7 +892,29 @@ class App {
 
     buildSymbolBar() {
         const bar = $("#symbolbar");
-        const symbols = [";", ",", "(", ")", "*", "=", "<", ">", "<>", "'|'", ".", "_", "%"];
+        const symbols = ["*", ".", ",", "=", "'|'", "<", ">", "<>", "(", ")", "%", "_"];
+        // Glühbirne: bleibt links stehen, erklärt die Hilfe per langem Drücken
+        const bulb = document.createElement("button");
+        bulb.className = "bulb";
+        bulb.setAttribute("aria-label", "Tipp zur Funktionsleiste");
+        bulb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg>`;
+        bulb.addEventListener("pointerdown", e => e.preventDefault());
+        bulb.addEventListener("mousedown", e => e.preventDefault());
+        bulb.onclick = () => {
+            if (this.symHelpEl?.classList.contains("symhelp-info")) { this.hideSymbolHelp(); return; }
+            this.hideSymbolHelp();
+            const pop = document.createElement("div");
+            pop.className = "symhelp symhelp-info";
+            pop.setAttribute("role", "dialog");
+            pop.innerHTML = `
+                <div class="symhelp-info-row">
+                    <span class="symhelp-info-icon">${bulb.innerHTML}</span>
+                    <p>Weißt Du nicht, was ein Button in der Funktionsleiste bewirkt? Lege einfach für eine Sekunde Deinen Finger auf die Funktion, um Hilfe zu bekommen.</p>
+                    <button class="symhelp-close iconbtn small" aria-label="Hinweis schließen">✕</button>
+                </div>`;
+            this.openPopover(pop, bulb);
+        };
+        bar.appendChild(bulb);
         const words = ["select", "from", "where", "and", "or", "not", "join", "on", "as", "group by", "having", "order by", "desc",
             "count(|)", "sum(|)", "avg(|)", "min(|)", "max(|)", "length(|)", "distinct", "like", "in", "between", "is null", "limit",
             "insert into", "values", "update", "set", "delete from", "create table", "primary key", "references", "integer", "varchar(|)"];
@@ -975,6 +997,17 @@ class App {
             this.hideSymbolHelp();
             this.toast("Beispiel eingefügt – mit ▶ Ausführen kannst Du es testen.");
         });
+        this.openPopover(pop, anchor);
+    }
+
+    /** Popup unter (oder notfalls über) einem Button der Symbolleiste anzeigen */
+    private openPopover(pop: HTMLElement, anchor: HTMLElement) {
+        pop.querySelectorAll("button").forEach(btn => {
+            btn.addEventListener("pointerdown", e => e.preventDefault());
+            btn.addEventListener("mousedown", e => e.preventDefault());
+        });
+        const close = pop.querySelector(".symhelp-close") as HTMLElement | null;
+        if (close) close.onclick = () => this.hideSymbolHelp();
         document.body.appendChild(pop);
         this.symHelpEl = pop;
 
@@ -990,7 +1023,12 @@ class App {
         pop.style.setProperty("--arrow-x", Math.max(16, Math.min(w - 16, r.left + r.width / 2 - left)) + "px");
         pop.classList.toggle("above", top < r.top);
 
-        const outside = (e: Event) => { if (!pop.contains(e.target as Node)) this.hideSymbolHelp(); };
+        const outside = (e: Event) => {
+            const t = e.target as Node;
+            // Tippen auf die Glühbirne bei offenem Hinweis: deren Klick schließt selbst
+            if (pop.contains(t) || (pop.classList.contains("symhelp-info") && anchor.contains(t))) return;
+            this.hideSymbolHelp();
+        };
         const key_ = (e: KeyboardEvent) => { if (e.key == "Escape") this.hideSymbolHelp(); };
         setTimeout(() => {
             document.addEventListener("pointerdown", outside, true);
