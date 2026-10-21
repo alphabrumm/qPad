@@ -462,3 +462,6 @@ td.bool { color: var(--hl-number); }
 .qp-stepper button { min-width: 44px; min-height: 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); cursor: pointer; font-weight: 600; }
 .qp-about { font-size: 14px; line-height: 1.5; color: var(--muted); }
 .qp-about a { color: var(--accent); }
+
+/* Kopier-Knöpfe in der Kopfzeile (wie JPad); auf schmalen Handys nur „alles kopieren“ */
+@media (max-width: 520px) { #btnCopyScript { display: none; } }

@@ -867,13 +867,32 @@ class App {
         return o;
     }
 
-    toast(text: string) {
+    toast(text: string, duration: number = 3800) {
+        document.querySelectorAll(".toast").forEach(e => e.remove());
         const t = document.createElement("div");
         t.className = "toast";
+        t.setAttribute("role", "status");
         t.textContent = text;
         document.body.appendChild(t);
-        setTimeout(() => t.classList.add("hide"), 3800);
-        setTimeout(() => t.remove(), 4300);
+        setTimeout(() => t.classList.add("hide"), duration);
+        setTimeout(() => t.remove(), duration + 500);
+    }
+
+    /**
+     * Kopiert den Code in die Zwischenablage – alle Skripte nacheinander (Reihenfolge wie
+     * die Reiter) oder nur das geöffnete Skript (wie in JPad).
+     */
+    async copyCode(all: boolean) {
+        const p = this.project;
+        const scripts = all ? p.scripts : [p.scripts[p.activeScript]].filter(s => s != null);
+        const filled = scripts.filter(s => s.text.trim() != "");
+        if (filled.length == 0) { this.toast(all ? "Es gibt noch keinen Code zum Kopieren." : "Dieses Skript ist noch leer."); return; }
+        const text = filled.map(s => s.text.replace(/\s+$/, "")).join("\n\n") + "\n";
+        const ok = await copyToClipboard(text);
+        const hint = "Füge den Code woanders wieder ein (z.B. bei einer Abgabe in einem Lernkurs).";
+        if (!ok) this.toast("Kopieren hat nicht geklappt. Markiere den Code im Editor und kopiere ihn von Hand.", 5000);
+        else if (all) this.toast("Code aller Skripte in die Zwischenablage kopiert. " + hint, 5000);
+        else this.toast(`Code des Skripts „${scripts[0].name}“ in die Zwischenablage kopiert. ` + hint, 5000);
     }
 
     showWait(text: string) {
@@ -1074,6 +1093,8 @@ class App {
         this.setFontSize(this.getFontSize());
         document.addEventListener("keydown", e => { if (e.key == "Escape") this.closeDrawer(); });
         $("#btnDownload").onclick = () => this.downloadProject();
+        $("#btnCopyAll").onclick = () => this.copyCode(true);
+        $("#btnCopyScript").onclick = () => this.copyCode(false);
         $("#btnSchema").onclick = () => this.toggleSidebar();
         $("#btnSidebarClose").onclick = () => this.toggleSidebar(false);
         $("#sidebarBackdrop").onclick = () => this.toggleSidebar(false);
@@ -1083,7 +1104,7 @@ class App {
         $("#btnUndo").onclick = () => this.editor.undo();
         $("#btnRedo").onclick = () => this.editor.redo();
         $("#status").onclick = () => this.editor.gotoNextError();
-        ["#btnRun", "#btnRunAll", "#btnUndo", "#btnRedo"].forEach(s => $(s).addEventListener("mousedown", e => e.preventDefault()));
+        ["#btnRun", "#btnRunAll", "#btnUndo", "#btnRedo", "#btnCopyAll", "#btnCopyScript"].forEach(s => $(s).addEventListener("mousedown", e => e.preventDefault()));
 
         this.setupSplitter();
         if (window.innerWidth >= 900) this.toggleSidebar(true); else this.toggleSidebar(false);
@@ -1168,4 +1189,25 @@ new App().start().catch(e => {
 
 if ("serviceWorker" in navigator && location.protocol == "https:") {
     navigator.serviceWorker.register("sw.js").catch(() => { });
+}
+
+/** Zwischenablage mit Rückfall für ältere Browser (wie in JPad). */
+async function copyToClipboard(text: string): Promise<boolean> {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch (e) { /* weiter mit dem Rückfall */ }
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    ta.style.fontSize = "16px";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { }
+    ta.remove();
+    return ok;
 }
