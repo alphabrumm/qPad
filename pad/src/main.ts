@@ -24,9 +24,9 @@ type View = "code" | "lernpfad" | "tabellen";
 /** Themes wie in JPad (bg/fg: Farben des kleinen Vorschau-Felds im Menü) */
 const SKINS: { id: string, label: string, icon: string, bg: string, fg: string }[] = [
     { id: "default", label: "Standard", icon: "palette", bg: "#f4f5f7", fg: "#1f5fbf" },
-    { id: "block", label: "Blockwelt – pixelig und kantig: Gras, Erde, Stein und Holz", icon: "block", bg: "#8fca5c", fg: "#4a2f17" },
     { id: "hund", label: "Hund – Farben des JPad-Lernpfads „Bello lernt Java“", icon: "dog", bg: "#e5f3ea", fg: "#1f8a6a" },
     { id: "schaf", label: "Schaf – Farben des JPad-Lernpfads „Der Schaf-Konstruktor“", icon: "sheep", bg: "#fdebdd", fg: "#e05d26" },
+    { id: "block", label: "Blockwelt – pixelig und kantig: Gras, Erde, Stein und Holz", icon: "block", bg: "#8fca5c", fg: "#4a2f17" },
     { id: "flat", label: "Flach – klare Linien in Weiß und Blau", icon: "hacker", bg: "#FFFFFF", fg: "#0050F0" },
     { id: "hacker", label: "Hacker – Neon-Grün, feine Linien, spitze Ecken", icon: "hacker", bg: "#FFFFFF", fg: "#00B86E" },
     { id: "pink", label: "Pink – wie Hacker, aber in Pink", icon: "hacker", bg: "#FFFFFF", fg: "#E0109F" },

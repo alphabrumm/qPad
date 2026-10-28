@@ -652,7 +652,16 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 :root[data-skin="block"] :is(.lp-head, .tabbar, .runbar) { background: var(--t-planks) 0 0 / 64px 64px; border-color: #000; }
 :root[data-skin="block"] :is(.lp-head-title, .tab, .status, .tabbar .iconbtn.small) { color: #fff; text-shadow: 2px 2px 0 #000; }
 :root[data-skin="block"] .tab.active { color: #ffe14a; border-bottom-color: #ffe14a; }
-:root[data-skin="block"] .status:is(.status-error, .status-warning, .status-info) { text-shadow: none; border: 2px solid #000; }
+/* Meldungen in der Statuszeile: dunkle Schrift auf hellem Grund (hell), helle Schrift auf dunklem Grund (dunkel).
+   Bewusst mit .runbar davor: die Regel für weiße Schrift auf Holz oben ist durch :is(…) sehr spezifisch. */
+:root[data-skin="block"] .runbar .status:is(.status-error, .status-warning, .status-info),
+:root[data-skin="block"] .runbar .status:is(.status-error, .status-warning, .status-info) * { text-shadow: none; }
+:root[data-skin="block"] .runbar .status:is(.status-error, .status-warning, .status-info) { border: 2px solid #000; }
+:root[data-skin="block"] .runbar .status.status-error { color: #5c0f0a; }
+:root[data-skin="block"] .runbar .status.status-warning { color: #4a3300; }
+:root[data-skin="block"] .runbar .status.status-info { color: var(--text); }
+:root[data-skin="block"][data-effective="dark"] .runbar .status.status-error { color: #ffd2cc; }
+:root[data-skin="block"][data-effective="dark"] .runbar .status.status-warning { color: #ffe9a8; }
 :root[data-skin="block"] .lp-head-title .jp-icon { color: #ffe14a; filter: drop-shadow(2px 2px 0 #000); }
 :root[data-skin="block"] .editor .cm-gutters { background: var(--t-planks) 0 0 / 64px 64px; color: #fff; border-right: 3px solid #000; text-shadow: 2px 2px 0 #000; }
 :root[data-skin="block"] .editor .cm-editor { font-size: calc(var(--editor-font, 16px) * 1.3); }
