@@ -72,13 +72,29 @@ jobs:
           echo "$INFO" >> "$GITHUB_STEP_SUMMARY"
           gh run download "$RUN" -R "$REPO" -n q-pad-webspace -D dist-qpad
           test -f dist-qpad/index.html && test -f dist-qpad/app.js
-      # Übertragen werden nur geänderte Dateien (Merkdatei .ftp-deploy-sync-state.json im Zielordner).
-      - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER || vars.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_DIR || vars.FTP_DIR }}
-          local-dir: ./dist-qpad/
-          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
-          log-level: standard
+      # Übertragung mit lftp (FTPS mit Wiederverwendung der TLS-Sitzung für die Datenverbindung – daran scheiterte
+      # SamKirkland/FTP-Deploy-Action mit „ECONNRESET (data socket)“). Hochgeladen werden nur neuere Dateien,
+      # auf dem Webspace wird nichts gelöscht.
+      - name: lftp installieren
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+      - name: Per FTP(S) übertragen
+        env:
+          S: ${{ secrets.FTP_SERVER || vars.FTP_SERVER }}
+          U: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
+          P: ${{ secrets.FTP_PASSWORD }}
+          D: ${{ secrets.FTP_DIR || vars.FTP_DIR }}
+          PROTO: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+        run: |
+          HOST="${S#ftp://}"; HOST="${HOST#ftps://}"; HOST="${HOST%/}"
+          if [ "$PROTO" = "ftp" ]; then SSL="set ftp:ssl-allow false;"; else SSL="set ftp:ssl-force true; set ftp:ssl-protect-data true;"; fi
+          lftp -u "$U","$P" "$HOST" <<EOF
+          set cmd:fail-exit true
+          set net:timeout 30
+          set net:max-retries 3
+          set net:reconnect-interval-base 5
+          set ftp:passive-mode true
+          $SSL
+          mirror --reverse --only-newer --no-perms --parallel=3 --verbose=1 ./dist-qpad/ "$D"
+          bye
+          EOF
+          echo "Übertragung abgeschlossen." >> "$GITHUB_STEP_SUMMARY"
