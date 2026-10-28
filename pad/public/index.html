@@ -14,6 +14,8 @@
             var c = "auto"; try { c = localStorage.getItem("qpad.theme") || "auto"; } catch (e) { }
             var d = c == "dark" || (c == "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
             document.documentElement.dataset.effective = d ? "dark" : "light";
+            var k = null; try { k = localStorage.getItem("qpad.skin"); } catch (e) { }
+            if (k && k != "default") document.documentElement.dataset.skin = k;
         })();
     </script>
     <link rel="manifest" href="manifest.webmanifest">
@@ -124,6 +126,7 @@
                 <button data-theme-choice="dark"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span>Dunkel</span></button>
                 <button data-theme-choice="auto"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg><span>System</span></button>
             </div>
+            <div id="skinPicker" class="qp-skin-picker" role="group" aria-label="Theme"></div>
             <div class="qp-setting-row">
                 <span>Schriftgröße</span>
                 <div class="qp-stepper">

@@ -20,6 +20,17 @@ import { icon } from "./icons.js";
 import { loadLernpfadUrl, nameFromUrl, readLernpfadFile, titleOf, vorlageOf, withStorageShim } from "./lernpfad.js";
 
 type View = "code" | "lernpfad" | "tabellen";
+
+/** Themes wie in JPad (bg/fg: Farben des kleinen Vorschau-Felds im Menü) */
+const SKINS: { id: string, label: string, icon: string, bg: string, fg: string }[] = [
+    { id: "default", label: "Standard", icon: "palette", bg: "#f4f5f7", fg: "#1f5fbf" },
+    { id: "kiosk", label: "Kiosk – Farben des Demo-Lernpfads „Der Pausenkiosk“", icon: "pretzel", bg: "#f9e2cf", fg: "#b4521a" },
+    { id: "hund", label: "Hund – Farben des JPad-Lernpfads „Bello lernt Java“", icon: "dog", bg: "#e5f3ea", fg: "#1f8a6a" },
+    { id: "schaf", label: "Schaf – Farben des JPad-Lernpfads „Der Schaf-Konstruktor“", icon: "sheep", bg: "#fdebdd", fg: "#e05d26" },
+    { id: "flat", label: "Flach – klare Linien in Weiß und Blau", icon: "hacker", bg: "#FFFFFF", fg: "#0050F0" },
+    { id: "hacker", label: "Hacker – Neon-Grün, feine Linien, spitze Ecken", icon: "hacker", bg: "#FFFFFF", fg: "#00B86E" },
+    { id: "pink", label: "Pink – wie Hacker, aber in Pink", icon: "hacker", bg: "#FFFFFF", fg: "#E0109F" },
+];
 type LpMode = "normal" | "wide" | "full" | "hidden";
 /** Demo-Lernpfad (liegt im Paket unter learn/demo) */
 const DEMO_LERNPFAD = "learn/demo/Lernpfad-Pausenkiosk.html";
@@ -643,8 +654,24 @@ class App {
         this.editor?.view.requestMeasure();
         this.renderSettings();
     }
+    getSkin(): string {
+        try { const k = localStorage.getItem("qpad.skin"); return SKINS.some(x => x.id == k) ? k : "default"; } catch (e) { return "default"; }
+    }
+    setSkin(k: string) {
+        try { localStorage.setItem("qpad.skin", k); } catch (e) { }
+        applyTheme();
+        this.renderSettings();
+    }
+    buildSkinPicker() {
+        const box = $("#skinPicker");
+        box.innerHTML = SKINS.map(k => `<button data-skin-choice="${k.id}" aria-label="Theme ${esc(k.label)}" title="${esc(k.label)}"
+            style="--sw-bg:${k.bg};--sw-fg:${k.fg}"><span class="qp-skin-swatch">${icon(k.icon)}</span></button>`).join("");
+        box.querySelectorAll<HTMLElement>("[data-skin-choice]").forEach(b => b.onclick = () => this.setSkin(b.dataset.skinChoice));
+    }
     renderSettings() {
         const c = this.getThemeChoice();
+        const k = this.getSkin();
+        document.querySelectorAll<HTMLElement>("[data-skin-choice]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.skinChoice == k)));
         document.querySelectorAll<HTMLElement>("[data-theme-choice]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.themeChoice == c)));
         $("#fontSizeLabel").textContent = this.getFontSize() + " pt";
     }
@@ -1442,6 +1469,7 @@ class App {
         menu("#drawerLpAdd", () => this.pickLernpfad());
         menu("#drawerLpRemove", () => this.removeLernpfad());
         document.querySelectorAll<HTMLElement>("[data-theme-choice]").forEach(b => b.onclick = () => this.setThemeChoice(b.dataset.themeChoice));
+        this.buildSkinPicker();
         $("#fontSmaller").onclick = () => this.setFontSize(this.getFontSize() - 1);
         $("#fontBigger").onclick = () => this.setFontSize(this.getFontSize() + 1);
         this.setFontSize(this.getFontSize());
@@ -1526,13 +1554,28 @@ type SheetItem = {
     secondary?: { label: string, action: () => Promise<boolean> }
 };
 
-/** Hell/Dunkel/System – wie in JPad über data-effective am <html>-Element */
+/** Hell/Dunkel/System – wie in JPad über data-effective am <html>-Element; dazu das Theme (data-skin) */
 function applyTheme() {
-    let choice = "auto";
-    try { choice = localStorage.getItem("qpad.theme") || "auto"; } catch (e) { }
+    let choice = "auto", skin = "default";
+    try { choice = localStorage.getItem("qpad.theme") || "auto"; skin = localStorage.getItem("qpad.skin") || "default"; } catch (e) { }
+    const root = document.documentElement;
     const dark = choice == "dark" || (choice == "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.dataset.effective = dark ? "dark" : "light";
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#16181d" : "#f4f5f7");
+    root.dataset.effective = dark ? "dark" : "light";
+    if (skin == "default") delete root.dataset.skin;
+    else { root.dataset.skin = skin; loadSkinFonts(); }
+    const bar = getComputedStyle(root).getPropertyValue("--bg").trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bar || (dark ? "#16181d" : "#f4f5f7"));
+}
+
+/** Schriften der Themes (nur online; ohne Netz greifen die Ersatzschriften) */
+function loadSkinFonts() {
+    if (document.getElementById("qp-skin-fonts")) return;
+    const link = document.createElement("link");
+    link.id = "qp-skin-fonts";
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600&family=Share+Tech+Mono"
+        + "&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Pixelify+Sans:wght@500;700&display=swap";
+    document.head.appendChild(link);
 }
 applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", applyTheme);

@@ -43,6 +43,13 @@ Zwischendurch wird alles automatisch im Browser gesichert; ein versehentliches N
   Ein Tipp auf einen Spaltennamen oder „Inhalt“ springt zurück zum Code.
 * **Hinweis „Dreh dein iPad hochkant“**: geht im Querformat die Bildschirmtastatur auf, einmal pro Sitzung (abschaltbar für 4 Wochen).
 
+## Themes (wie JPad)
+
+☰ → Darstellung, unter Hell/Dunkel/System: **Standard, Kiosk** (Farbwelt des Demo-Lernpfads „Der Pausenkiosk“),
+**Hund, Schaf** (Farbwelten der JPad-Lernpfade), **Flach** (Weiß/Blau, dunkel Navy), **Hacker** (Neon-Grün) und **Pink**.
+Alle folgen Hell/Dunkel/System; Flach/Hacker/Pink mit spitzen Ecken, feinen Linien und Chakra Petch/Share Tech Mono
+(Google Fonts, offline Ersatzschriften). Gemerkt in `qpad.skin`, gesetzt vor dem ersten Zeichnen (kein Aufblitzen).
+
 ## Lernpfade
 
 * Ein Lernpfad ist eine HTML-Seite, die im Projekt mitreist (Feld `lernpfadHtml` der Projektdatei, Bilder als data-URIs).

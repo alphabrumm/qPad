@@ -556,3 +556,209 @@ html.phone.keyboard-open .app[data-view="code"] .bottomnav { display: none; }
 html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom)); }
 /* hochkant: Kopf der Lernpfad-Ansicht entfällt (der Reiter unten sagt schon, wo man ist), wie in JPad */
 .app[data-layout="tabs"] .lp-head { display: none; }
+
+/* =====================================================================
+   Themes wie in JPad (Menü → Darstellung, gemerkt in qpad.skin), alle folgen Hell/Dunkel/System.
+   Standard · Kiosk (Farbwelt des Demo-Lernpfads „Der Pausenkiosk“) · Flach · Hacker · Pink
+   ===================================================================== */
+
+/* ---------- Auswahl im Menü ---------- */
+.qp-skin-picker { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 10px 0 4px; }
+.qp-skin-picker::-webkit-scrollbar { display: none; }
+.qp-skin-picker button {
+    flex: none; display: grid; place-items: center; padding: 4px; cursor: pointer;
+    border: 2px solid transparent; border-radius: 12px; background: transparent;
+}
+.qp-skin-picker button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.qp-skin-swatch {
+    display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px;
+    background: var(--sw-bg); color: var(--sw-fg); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12);
+}
+.qp-skin-swatch .jp-icon { width: 24px; height: 24px; }
+
+/* ---------- Kiosk: Brezn-Braun, weiß-blauer Himmel (wie der Demo-Lernpfad) ---------- */
+:root[data-skin="kiosk"] {
+    --sans: "Atkinson Hyperlegible", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --bg: #fbf6ef; --panel: #ffffff; --panel-2: #f6eadb; --border: #ebd9c3;
+    --text: #2b1d12; --muted: #6b5442;
+    --accent: #b4521a; --accent-text: #ffffff; --accent-soft: #f9e2cf;
+    --ok: #2f8a4a; --ok-soft: #dcf1e1; --err: #c23b3b; --err-soft: #fbe0e0; --warn: #a36b00; --warn-soft: #fff0c8;
+    --hl-keyword: #2453b8; --hl-type: #0b7a75; --hl-function: #7a3db8; --hl-string: #b5442a; --hl-number: #0b7a2f;
+    --hl-comment: #8d8378; --hl-ident: #8a5a00; --hl-operator: #4a3a2c; --hl-punct: #6b5442;
+    color-scheme: light;
+}
+:root[data-skin="kiosk"][data-effective="dark"] {
+    --bg: #19120c; --panel: #231910; --panel-2: #2e2217; --border: #4a3726;
+    --text: #f7ede3; --muted: #ccb6a1;
+    --accent: #f08d4f; --accent-text: #19120c; --accent-soft: #45291a;
+    --ok: #6fd08b; --ok-soft: #1f3a2a; --err: #ff8a8a; --err-soft: #452326; --warn: #ffc65c; --warn-soft: #3a2c14;
+    --hl-keyword: #8fb4ff; --hl-type: #4fd1c5; --hl-function: #d2a8ff; --hl-string: #ffab78; --hl-number: #8fd694;
+    --hl-comment: #a2968a; --hl-ident: #f0c674; --hl-operator: #e3d3c4; --hl-punct: #ccb6a1;
+    color-scheme: dark;
+}
+:root[data-skin="kiosk"] .editor-pane,
+:root[data-skin="kiosk"] .app {
+    background: linear-gradient(180deg, color-mix(in srgb, #2560c4 14%, #fbf6ef) 0%, color-mix(in srgb, #2560c4 5%, #fbf6ef) 45%, color-mix(in srgb, #f2b134 14%, #fbf6ef) 100%);
+}
+:root[data-skin="kiosk"][data-effective="dark"] .editor-pane,
+:root[data-skin="kiosk"][data-effective="dark"] .app {
+    background: linear-gradient(180deg, color-mix(in srgb, #94b8ff 14%, #19120c) 0%, color-mix(in srgb, #94b8ff 5%, #19120c) 45%, color-mix(in srgb, #ffc65c 12%, #19120c) 100%);
+}
+:root[data-skin="kiosk"] .editor :is(.cm-editor, .cm-gutters) { background: transparent; }
+:root[data-skin="kiosk"] :is(.topbar, .runbar, .bottomnav, .tabbar) { background: color-mix(in srgb, var(--panel) 75%, transparent); }
+:root[data-skin="kiosk"] :is(.project-name, .qp-brand, .sidebar-title, .lp-head-title) { font-family: "Pixelify Sans", var(--sans); letter-spacing: .02em; }
+:root[data-skin="kiosk"] .project-name { font-size: 19px; }
+:root[data-skin="kiosk"] .topbar { border-bottom: 3px solid transparent; border-image: repeating-linear-gradient(90deg, #d64545 0 14px, #ffffff 14px 28px) 3; }
+
+/* ---------- Flach, Hacker, Pink: feine Linien, spitze Ecken, Chakra Petch / Share Tech Mono ---------- */
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) {
+    --sans: "Chakra Petch", "Share Tech Mono", ui-monospace, Menlo, monospace;
+    --mono: "Share Tech Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) *,
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) *::before,
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) *::after { border-radius: 0 !important; }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .project-name { letter-spacing: .04em; text-transform: uppercase; }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .topbar .iconbtn,
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .tabbar .iconbtn { color: var(--accent); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .btn:not(.download):not(.run):not(.primary) { background: transparent; border-color: var(--border); color: var(--accent); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .btn.run { color: var(--accent-text); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .symbolbar button:not(.bulb) { background: transparent; border-color: var(--border); box-shadow: none; color: var(--accent); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .symbolbar .kw { color: var(--hl-keyword); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .symbolbar button:not(.bulb):active { background: var(--accent); color: var(--accent-text); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .tab.active { color: var(--accent); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .qp-segmented { background: transparent; }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .qp-segmented button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); box-shadow: none; }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .editor .cm-cursor { border-left: 9px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) :is(.qp-drawer, .sheet, .symhelp) { border: 1px solid var(--accent); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .result-block { border-color: var(--border); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .app {
+    background:
+        repeating-linear-gradient(0deg, color-mix(in srgb, var(--grid) 3.5%, transparent) 0 1px, transparent 1px 3px),
+        linear-gradient(90deg, color-mix(in srgb, var(--grid) 6%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
+        linear-gradient(0deg, color-mix(in srgb, var(--grid) 6%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
+        var(--bg);
+}
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .results { background: transparent; }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .splitter { background: transparent; }
+
+/* Flach hell: Weiß und Blau */
+:root[data-skin="flat"] {
+    --grid: #0050F0;
+    --bg: #FFFFFF; --panel: #FFFFFF; --panel-2: #F1F5FF; --border: #BCCDF2;
+    --text: #0A1F4D; --muted: #4D6694;
+    --accent: #0050F0; --accent-text: #FFFFFF; --accent-soft: #E2EBFF;
+    --ok: #0050F0; --ok-soft: #E2EBFF; --err: #D61F69; --err-soft: #FDE6EF; --warn: #B76E00; --warn-soft: #FFF3DC;
+    --shadow: 0 0 0 1px #0050F0, 0 12px 28px -10px rgba(0, 80, 240, .25);
+    --hl-keyword: #C0158A; --hl-type: #00809E; --hl-function: #0040C8; --hl-string: #B25400; --hl-number: #C2410C;
+    --hl-comment: #7489B6; --hl-ident: #2B54C9; --hl-operator: #56709F; --hl-punct: #56709F;
+    color-scheme: light;
+}
+/* Flach dunkel: Navy, weiße Linien, Hacker-Schriftfarben */
+:root[data-skin="flat"][data-effective="dark"] {
+    --grid: #FFFFFF;
+    --bg: #000080; --panel: #000080; --panel-2: #00006A; --border: #FFFFFF;
+    --text: #D7FFE6; --muted: #A9C8FF;
+    --accent: #FFFFFF; --accent-text: #000080; --accent-soft: rgba(255, 255, 255, .16);
+    --ok: #00FF9C; --ok-soft: rgba(0, 255, 156, .14); --err: #FF5CA8; --err-soft: #2A0A4A; --warn: #FFB020; --warn-soft: rgba(255, 176, 32, .15);
+    --shadow: 0 0 0 1px #FFFFFF, 0 14px 30px -12px rgba(0, 0, 0, .6);
+    --hl-keyword: #FF2EC4; --hl-type: #00E5FF; --hl-function: #7CFFCB; --hl-string: #F2FF3A; --hl-number: #FF9F1C;
+    --hl-comment: #8FA6E8; --hl-ident: #B8FF5A; --hl-operator: #C9D6FF; --hl-punct: #C9D6FF;
+    color-scheme: dark;
+}
+:root[data-skin="flat"][data-effective="dark"] .symbolbar .bulb { background: #FFFFFF; color: #000080; }
+
+/* Hacker: schwarz und Neon-Grün (hell: weiß mit kräftigeren Hacker-Farben) */
+:root[data-skin="hacker"] {
+    --grid: #00FF9C;
+    --bg: #020604; --panel: #050C08; --panel-2: #0A1710; --border: #12462C;
+    --text: #D7FFE6; --muted: #5FB386;
+    --accent: #00FF9C; --accent-text: #001A0E; --accent-soft: #04291A;
+    --ok: #00FF9C; --ok-soft: #04291A; --err: #FF2E88; --err-soft: #2A0716; --warn: #FFB020; --warn-soft: #2A1F05;
+    --shadow: 0 0 0 1px #00FF9C, 0 0 28px rgba(0, 255, 156, .25);
+    --hl-keyword: #FF2EC4; --hl-type: #00E5FF; --hl-function: #7CFFCB; --hl-string: #F2FF3A; --hl-number: #FF9F1C;
+    --hl-comment: #2F7A52; --hl-ident: #B8FF5A; --hl-operator: #6FA88A; --hl-punct: #6FA88A;
+    color-scheme: dark;
+}
+:root[data-skin="hacker"][data-effective="light"] {
+    --grid: #00B86E;
+    --bg: #FFFFFF; --panel: #FFFFFF; --panel-2: #EEFBF4; --border: #B5E6CC;
+    --text: #06281A; --muted: #2C7A54;
+    --accent: #00B86E; --accent-text: #FFFFFF; --accent-soft: #DDF8EA;
+    --ok: #00B86E; --ok-soft: #DDF8EA; --err: #E0106A; --err-soft: #FDE3EE; --warn: #B76E00; --warn-soft: #FFF3DC;
+    --shadow: 0 0 0 1px #00B86E, 0 0 28px rgba(0, 184, 110, .18);
+    --hl-keyword: #E0109F; --hl-type: #0093B0; --hl-function: #0E9F6E; --hl-string: #8C8200; --hl-number: #D97800;
+    --hl-comment: #6E9C84; --hl-ident: #4F8F00; --hl-operator: #5E8A74; --hl-punct: #5E8A74;
+    color-scheme: light;
+}
+
+/* Pink: wie Hacker, alles Grüne pink, Schlüsselwörter grün */
+:root[data-skin="pink"] {
+    --grid: #FF2EC4;
+    --bg: #060204; --panel: #0C050A; --panel-2: #170A13; --border: #46123A;
+    --text: #FFD7F2; --muted: #B35F9C;
+    --accent: #FF2EC4; --accent-text: #1A0012; --accent-soft: #290420;
+    --ok: #FF2EC4; --ok-soft: #290420; --err: #FF2E88; --err-soft: #2A0716; --warn: #FFB020; --warn-soft: #2A1F05;
+    --shadow: 0 0 0 1px #FF2EC4, 0 0 28px rgba(255, 46, 196, .25);
+    --hl-keyword: #00FF9C; --hl-type: #00E5FF; --hl-function: #FF7CDB; --hl-string: #F2FF3A; --hl-number: #FF9F1C;
+    --hl-comment: #7A2F62; --hl-ident: #FFA0E8; --hl-operator: #A86F96; --hl-punct: #A86F96;
+    color-scheme: dark;
+}
+:root[data-skin="pink"][data-effective="light"] {
+    --grid: #E0109F;
+    --bg: #FFFFFF; --panel: #FFFFFF; --panel-2: #FDEEF8; --border: #F0BEE2;
+    --text: #2A0620; --muted: #7A2C66;
+    --accent: #E0109F; --accent-text: #FFFFFF; --accent-soft: #FDE3F5;
+    --ok: #E0109F; --ok-soft: #FDE3F5; --err: #E0106A; --err-soft: #FDE3EE; --warn: #B76E00; --warn-soft: #FFF3DC;
+    --shadow: 0 0 0 1px #E0109F, 0 0 28px rgba(224, 16, 159, .18);
+    --hl-keyword: #00B86E; --hl-type: #0093B0; --hl-function: #C21088; --hl-string: #8C8200; --hl-number: #D97800;
+    --hl-comment: #9C6E8E; --hl-ident: #B0408F; --hl-operator: #8A5E7C; --hl-punct: #8A5E7C;
+    color-scheme: light;
+}
+/* Neon-Leuchten nur im Dunkeln */
+:root:is([data-skin="hacker"], [data-skin="pink"]):not([data-effective="light"]) .editor .cm-content { text-shadow: 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); }
+:root:is([data-skin="hacker"], [data-skin="pink"]):not([data-effective="light"]) :is(.tab.active, .bottomnav button[aria-current="true"]) { text-shadow: 0 0 8px var(--accent); }
+:root:is([data-skin="hacker"], [data-skin="pink"]):not([data-effective="light"]) .btn.run { box-shadow: 0 0 16px color-mix(in srgb, var(--ok) 45%, transparent); }
+:root[data-skin] ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+:root[data-skin] .editor .cm-selectionBackground { background: color-mix(in srgb, var(--accent) 28%, transparent) !important; }
+
+/* ---------- Hund und Schaf: Farbwelten der JPad-Lernpfade „Bello lernt Java“ und „Der Schaf-Konstruktor“ ---------- */
+:root:is([data-skin="hund"], [data-skin="schaf"]) {
+    --sans: "Atkinson Hyperlegible", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --err: #c23b3b; --err-soft: #fbe0e0; --ok: #2f8a4a; --ok-soft: #dcf1e1; --warn: #a36b00; --warn-soft: #fff0c8;
+    --hl-keyword: #8a3bc9; --hl-type: #b2437a; --hl-string: #c2551c; --hl-number: #2b7d4a; --hl-comment: #9a8692; --hl-function: #4b4fd0;
+    color-scheme: light;
+}
+:root[data-skin="hund"] {
+    --bg: #f4faf5; --panel: #ffffff; --panel-2: #e5f3ea; --border: #cfe5d7; --text: #17302a; --muted: #4f6b62;
+    --accent: #1f8a6a; --accent-text: #ffffff; --accent-soft: #d4efe3; --hl-ident: #17302a; --hl-operator: #4f6b62; --hl-punct: #4f6b62;
+}
+:root[data-skin="schaf"] {
+    --bg: #fff6ef; --panel: #ffffff; --panel-2: #fdebdd; --border: #f0d5c3; --text: #2b1d36; --muted: #6f5a6c;
+    --accent: #e05d26; --accent-text: #ffffff; --accent-soft: #fde0cc; --hl-ident: #2b1d36; --hl-operator: #6f5a6c; --hl-punct: #6f5a6c;
+}
+:root:is([data-skin="hund"], [data-skin="schaf"])[data-effective="dark"] {
+    --err: #ff8a8a; --err-soft: #452326; --ok: #6fd08b; --ok-soft: #1f3a2a; --warn: #ffc35c; --warn-soft: #3a2c14;
+    --hl-keyword: #d6a3ff; --hl-type: #ff8fbf; --hl-string: #ffab78; --hl-number: #7fd69a; --hl-comment: #9b8aa3; --hl-function: #a9adff;
+    color-scheme: dark;
+}
+:root[data-skin="hund"][data-effective="dark"] {
+    --bg: #0f1a17; --panel: #152420; --panel-2: #1c302a; --border: #2a4a3f; --text: #e8f5ef; --muted: #a9c4ba;
+    --accent: #4fd1a5; --accent-text: #0f1a17; --accent-soft: #173a30; --hl-ident: #e8f5ef; --hl-operator: #a9c4ba; --hl-punct: #a9c4ba;
+}
+:root[data-skin="schaf"][data-effective="dark"] {
+    --bg: #1a1430; --panel: #231b3c; --panel-2: #2d244d; --border: #3c305e; --text: #fbeee6; --muted: #c8b4c6;
+    --accent: #ff8a4f; --accent-text: #1a1430; --accent-soft: #46283a; --hl-ident: #fbeee6; --hl-operator: #c8b4c6; --hl-punct: #c8b4c6;
+}
+:root:is([data-skin="hund"], [data-skin="schaf"]) :is(.app, .editor-pane) {
+    background: linear-gradient(180deg, color-mix(in srgb, #5457c4 22%, var(--bg)) 0%, color-mix(in srgb, #c2477a 16%, var(--bg)) 45%, color-mix(in srgb, #f0a12e 18%, var(--bg)) 85%, var(--bg) 100%);
+}
+:root:is([data-skin="hund"], [data-skin="schaf"])[data-effective="dark"] :is(.app, .editor-pane) {
+    background: linear-gradient(180deg, color-mix(in srgb, #a8abff 22%, var(--bg)) 0%, color-mix(in srgb, #ff7fae 16%, var(--bg)) 45%, color-mix(in srgb, #ffc35c 18%, var(--bg)) 85%, var(--bg) 100%);
+}
+:root:is([data-skin="hund"], [data-skin="schaf"]) .editor :is(.cm-editor, .cm-gutters) { background: transparent; }
+:root:is([data-skin="hund"], [data-skin="schaf"]) :is(.topbar, .runbar, .bottomnav, .tabbar) { background: color-mix(in srgb, var(--panel) 70%, transparent); }
+:root:is([data-skin="hund"], [data-skin="schaf"]) :is(.project-name, .qp-brand, .sidebar-title, .lp-head-title) { font-family: "Pixelify Sans", var(--sans); letter-spacing: .02em; }
+:root:is([data-skin="hund"], [data-skin="schaf"]) .project-name { font-size: 19px; }

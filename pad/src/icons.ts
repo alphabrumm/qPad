@@ -49,6 +49,10 @@ const paths: Record<string, string> = {
     table: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',
     result: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>',
     demo: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/>',
+    dog: '<path d="M7.5 6.5L4.5 5 3 11l3 1.5"/><path d="M16.5 6.5l3-1.5 1.5 6-3 1.5"/><path d="M6.5 8.5C7.3 5.9 9.4 4.5 12 4.5s4.7 1.4 5.5 4v5a5.5 5.5 0 0 1-11 0z"/><circle cx="9.7" cy="11" r=".9" fill="currentColor" stroke="none"/><circle cx="14.3" cy="11" r=".9" fill="currentColor" stroke="none"/><path d="M10.8 14.3h2.4L12 15.6z" fill="currentColor"/><path d="M12 15.6v1.4"/>',
+    sheep: '<path d="M8.5 17.5a3 3 0 0 1-1.3-5.7 3.2 3.2 0 0 1 4.3-4.1 3.2 3.2 0 0 1 5.6.6 3 3 0 0 1 2.4 5.4 2.9 2.9 0 0 1-2.5 3.8z"/><path d="M10 17.5v3M15.5 17.5v3"/><path d="M7.2 11.8c-1-.9-1.2-2.4-.4-3.5.6-.8 1.6-1.1 2.5-.8"/><ellipse cx="5.5" cy="12.2" rx="2.4" ry="2.8"/><circle cx="4.9" cy="11.9" r=".6" fill="currentColor" stroke="none"/>',
+    pretzel: '<path d="M12 9.5C10.5 5.5 4 5 4 10.5c0 4 4 7.5 8 9 4-1.5 8-5 8-9 0-5.5-6.5-5-8-1"/><path d="M8.5 16.5l6.5-7M15.5 16.5L9 9.5"/>',
+    hacker: '<path d="M4.5 21v-1.5c0-2.6 1.7-4.6 4-5.4-1-1.3-1.5-2.9-1.5-4.6C7 6.2 9.2 3.5 12 3.5s5 2.7 5 6c0 1.7-.5 3.3-1.5 4.6 2.3.8 4 2.8 4 5.4V21"/><path d="M9 10.2c0-2.1 1.3-3.6 3-3.6s3 1.5 3 3.6c0 2-1.3 3.7-3 3.7s-3-1.7-3-3.7z"/><path d="M8.6 9.3h6.8M9.3 9.5h2.2v1.9H9.3zM12.5 9.5h2.2v1.9h-2.2z" fill="currentColor" stroke-width="1.2"/>',
     split: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M13 4v16"/>',
 };
 
