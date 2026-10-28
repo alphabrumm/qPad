@@ -36,9 +36,11 @@ export function makeCompletionSource(getModule: () => PadModule | null, getStruc
             const tables: Completion[] = [];
             addDatabaseTables(getStructure(), { fromColumn: 0, toColumn: 0, fromLine: 0, toLine: 0, hintColumns: false, hintTables: true, hintKeywords: [] }, tables);
             if (tables.length == 0) return null;
+            // Steht der Tabellenname schon vollständig da, kein Popup: Enter erzeugt dann einen Zeilenumbruch.
+            // Deshalb ohne validFor – die Liste wird bei jedem Tastendruck neu bestimmt.
             const typedWord = word.text.toLowerCase();
-            if (!context.explicit && typedWord.length > 0 && tables.some(o => o.label.toLowerCase() == typedWord)) return null;
-            return { from: word.from, options: tables, validFor: /^[\wäöüÄÖÜß]*$/ };
+            if (typedWord.length > 0 && tables.some(o => o.label.toLowerCase() == typedWord)) return null;
+            return { from: word.from, options: tables };
         }
         const dotMatch = context.matchBefore(/[\wäöüÄÖÜß]+\.[\wäöüÄÖÜß]*/);
         // Automatisch erst öffnen, wenn ein Buchstabe oder ein Punkt getippt wurde
@@ -59,7 +61,10 @@ export function makeCompletionSource(getModule: () => PadModule | null, getStruc
             const [before] = dotMatch.text.split(".");
             addDotCompletions(before.toLowerCase(), symbolTable, getStructure(), options);
             if (options.length == 0) return null;
-            return { from: dotMatch.from + before.length + 1, options: options.map(withSpaceIfWanted), validFor: /^[\wäöüÄÖÜß]*$/ };
+            // Spaltenname schon vollständig getippt: kein Popup, Enter bleibt ein Zeilenumbruch
+            const typedCol = dotMatch.text.split(".")[1].toLowerCase();
+            if (!context.explicit && typedCol.length > 0 && options.some(o => o.label.toLowerCase() == typedCol)) return null;
+            return { from: dotMatch.from + before.length + 1, options: options.map(withSpaceIfWanted) };
         }
 
         addKeywordCompletions(hint, options);
@@ -85,7 +90,9 @@ export function makeCompletionSource(getModule: () => PadModule | null, getStruc
         options = options.map(o => o.type == "keyword" ? withTrailingSpace(o) : o);
 
         options = options.map(withSpaceIfWanted);
-        return { from: word.from, options, validFor: /^[\wäöüÄÖÜß]*$/ };
+        // Ohne validFor: Die Liste wird bei jedem Tastendruck neu bestimmt, damit sie verschwindet, sobald ein Wort
+        // vollständig dasteht – sonst würde Enter den Vorschlag übernehmen statt eine neue Zeile zu beginnen.
+        return { from: word.from, options };
     };
 }
 

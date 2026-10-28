@@ -345,6 +345,26 @@ td.bool { color: var(--hl-number); }
 .empty { color: var(--muted); padding: 22px 12px; text-align: center; line-height: 1.6; }
 .empty.small { font-size: 14px; padding: 14px 8px; text-align: left; }
 /* Hinweis im noch leeren Ergebnisbereich: als Kasten in der Farbe des Editors, damit er auf jedem Hintergrund lesbar ist */
+/* Mehrere Ergebnisse: Sprungleiste oben, Nummern, niedrigere Tabellen */
+.results { position: relative; }
+.result-nav {
+    position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin: 0 -10px; padding: 6px 10px; background: color-mix(in srgb, var(--bg) 88%, transparent);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border);
+}
+.result-nav-title { font-size: 13px; color: var(--muted); margin-right: 2px; }
+.result-chip {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px 0 4px; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--panel); font-size: 13px; color: var(--text);
+}
+.result-chip b, .result-nr {
+    display: inline-grid; place-items: center; min-width: 24px; height: 24px; border-radius: 999px;
+    background: var(--accent); color: var(--accent-text); font-size: 13px; font-weight: 700; flex: none;
+}
+.result-chip.is-error b { background: var(--err); }
+.result-nr { margin-right: 2px; }
+.message > .result-nr, .error > .result-nr { margin: 8px 0 0 12px; }
+.results.is-multi .table-wrap { max-height: min(42vh, 320px); }
 .results .empty-box { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; margin: 10px 0; padding: 16px 14px; }
 
 .hl-keyword { color: var(--hl-keyword); font-weight: 600; }

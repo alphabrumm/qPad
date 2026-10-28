@@ -465,6 +465,30 @@ class App {
             area.appendChild(d);
         }
         blocks.forEach(b => area.appendChild(b));
+        // Mehrere Anweisungen („Alle“ oder Markierung): Ergebnisse durchnummerieren, Tabellen niedriger halten und
+        // oben eine Leiste mit Sprungmarken anzeigen – sonst liegt das zweite Ergebnis oft unsichtbar weit unten.
+        const all = [...area.querySelectorAll<HTMLElement>(":scope > .result-block")];
+        area.classList.toggle("is-multi", all.length > 1);
+        if (all.length > 1) {
+            const nav = document.createElement("div");
+            nav.className = "result-nav";
+            nav.innerHTML = `<span class="result-nav-title">${all.length} Ergebnisse:</span>`;
+            all.forEach((blk, i) => {
+                const nr = document.createElement("span");
+                nr.className = "result-nr";
+                nr.textContent = String(i + 1);
+                (blk.querySelector(".result-head") ?? blk).prepend(nr);
+                const kind = blk.classList.contains("error") ? "✗" : blk.classList.contains("message") ? "✓" : blk.querySelector(".result-count")?.textContent?.replace(/ Datens(atz|ätze)$/, "") ?? "";
+                const chip = document.createElement("button");
+                chip.className = "result-chip" + (blk.classList.contains("error") ? " is-error" : "");
+                chip.innerHTML = `<b>${i + 1}</b><span>${esc(kind)}</span>`;
+                chip.title = `Ergebnis ${i + 1} anzeigen`;
+                chip.addEventListener("mousedown", e => e.preventDefault());
+                chip.onclick = () => area.scrollTo({ top: blk.offsetTop - nav.offsetHeight - 6, behavior: "smooth" });
+                nav.appendChild(chip);
+            });
+            area.prepend(nav);
+        }
         const info = document.createElement("div");
         info.className = "result-time";
         info.textContent = `ausgeführt in ${ms} ms`;
