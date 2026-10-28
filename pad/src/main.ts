@@ -471,7 +471,7 @@ class App {
     }
 
     clearResults() {
-        $("#results").innerHTML = `<div class="empty">Tippe auf <b>▶ Ausführen</b>, um die Anweisung an der Cursorposition auszuführen.<br>
+        $("#results").innerHTML = `<div class="empty empty-box">Tippe auf <b>▶ Ausführen</b>, um die Anweisung an der Cursorposition auszuführen.<br>
         Mit Tastatur: <kbd>⇧</kbd>+<kbd>↩</kbd> oder <kbd>⌘</kbd>+<kbd>↩</kbd>.</div>`;
     }
 
@@ -1290,11 +1290,8 @@ class App {
     buildSymbolBar() {
         const bar = $("#symbolbar");
         const symbols = ["*", ".", ",", "=", "'|'", "<", ">", "<>", "(", ")", "%", "_"];
-        // Glühbirne: bleibt links stehen, erklärt die Hilfe per langem Drücken
-        const bulb = document.createElement("button");
-        bulb.className = "bulb";
-        bulb.setAttribute("aria-label", "Tipp zur Funktionsleiste");
-        bulb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg>`;
+        // Glühbirne (oben in der Kopfzeile): erklärt die Hilfe per langem Drücken
+        const bulb = $("#btnBulb");
         bulb.addEventListener("pointerdown", e => e.preventDefault());
         bulb.addEventListener("mousedown", e => e.preventDefault());
         bulb.onclick = () => {
@@ -1306,12 +1303,11 @@ class App {
             pop.innerHTML = `
                 <div class="symhelp-info-row">
                     <span class="symhelp-info-icon">${bulb.innerHTML}</span>
-                    <p>Weißt Du nicht, was ein Button in der Funktionsleiste bewirkt? Lege einfach eine halbe Sekunde lang Deinen Finger auf die Funktion, um Hilfe zu bekommen.</p>
+                    <p>Weißt Du nicht, was ein Button in der Symbolleiste über dem Editor bewirkt? Lege einfach eine halbe Sekunde lang Deinen Finger auf die Funktion, um Hilfe zu bekommen.</p>
                     <button class="symhelp-close iconbtn small" aria-label="Hinweis schließen">✕</button>
                 </div>`;
             this.openPopover(pop, bulb);
         };
-        bar.appendChild(bulb);
         const words = ["select", "from", "where", "and", "or", "not", "join", "on", "as", "group by", "having", "order by", "desc",
             "count(|)", "sum(|)", "avg(|)", "min(|)", "max(|)", "length(|)", "distinct", "like", "in", "between", "is null", "limit",
             "insert into", "values", "update", "set", "delete from", "create table", "primary key", "references", "integer", "varchar(|)"];
@@ -1456,6 +1452,7 @@ class App {
         menu("#drawerSave", () => this.downloadProject());
         menu("#drawerShare", () => this.shareProject());
         menu("#drawerRename", () => this.renameProject());
+        menu("#drawerCopyAll", () => this.copyCode(true));
         menu("#drawerTemplate", () => this.templateDialog());
         menu("#drawerImport", () => this.pickFile("database"));
         menu("#drawerExportDb", async () => {
@@ -1486,7 +1483,7 @@ class App {
         $("#btnUndo").onclick = () => this.editor.undo();
         $("#btnRedo").onclick = () => this.editor.redo();
         $("#status").onclick = () => this.editor.gotoNextError();
-        ["#btnRun", "#btnRunAll", "#btnUndo", "#btnRedo", "#btnCopyAll", "#btnCopyScript"].forEach(s => $(s).addEventListener("mousedown", e => e.preventDefault()));
+        ["#btnRun", "#btnRunAll", "#btnUndo", "#btnRedo", "#btnBulb", "#btnCopyAll", "#btnCopyScript"].forEach(s => $(s).addEventListener("mousedown", e => e.preventDefault()));
 
         this.setupSplitter();
         this.toggleSidebar(this.layoutMq.matches);

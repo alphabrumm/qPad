@@ -200,14 +200,22 @@ code { font-family: var(--mono); font-size: .9em; }
 }
 @keyframes qp-hold { to { transform: scaleX(1); } }
 
-/* Glühbirne: bleibt beim horizontalen Scrollen links stehen */
-.symbolbar .bulb {
-    position: sticky; left: 0; z-index: 2; min-width: 42px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center;
-    background: var(--accent); border-color: var(--accent); color: var(--accent-text);
-    box-shadow: -8px 0 0 var(--panel-2), 8px 0 0 var(--panel-2), 16px 0 8px var(--panel-2);
+/* Kopfzeile: Rückgängig/Wiederholen, dezenter Trennstrich, Glühbirne (links neben „Tabellen“) */
+.topbar-gap { width: 6px; flex: none; }
+.topbar-sep { width: 1px; height: 28px; background: var(--border); margin: 0 6px; flex: none; }
+.histbtn { min-width: 48px; min-height: 44px; background: var(--panel-2); color: var(--text); }
+.histbtn .jp-icon { width: 24px; height: 24px; }
+.topbar .bulb { min-width: 48px; background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.topbar .bulb .jp-icon { width: 24px; height: 24px; }
+.topbar .bulb:active { filter: brightness(1.15); }
+@media (max-width: 520px) {
+    .topbar { gap: 4px; padding-inline: 6px; }
+    .topbar .histbtn, .topbar .bulb, .topbar .iconbtn { min-width: 40px; }
+    .topbar-sep { margin: 0 1px; } .topbar-gap { display: none; }
+    .project-name { min-width: 64px; font-size: 15px; padding-inline: 2px; }
 }
-.symbolbar .bulb svg { width: 22px; height: 22px; }
-.symbolbar .bulb:active { background: var(--accent); filter: brightness(1.15); }
+/* Handy: „Code kopieren“ steht dann nur im Menü, damit der Projektname Platz hat */
+@media (max-width: 430px) { #btnCopyAll { display: none; } }
 .symhelp-info { width: min(380px, calc(100vw - 16px)); }
 .symhelp-info-row { display: flex; align-items: flex-start; gap: 10px; }
 .symhelp-info-row p { margin: 4px 0; font-size: 15px; line-height: 1.45; flex: 1; }
@@ -322,6 +330,8 @@ td.bool { color: var(--hl-number); }
 .pager button:disabled { opacity: .4; }
 .empty { color: var(--muted); padding: 22px 12px; text-align: center; line-height: 1.6; }
 .empty.small { font-size: 14px; padding: 14px 8px; text-align: left; }
+/* Hinweis im noch leeren Ergebnisbereich: als Kasten in der Farbe des Editors, damit er auf jedem Hintergrund lesbar ist */
+.results .empty-box { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; margin: 10px 0; padding: 16px 14px; }
 
 .hl-keyword { color: var(--hl-keyword); font-weight: 600; }
 .hl-string { color: var(--hl-string); }
@@ -627,7 +637,7 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 :root[data-skin="block"] .topbar .iconbtn.small { color: #fff; filter: drop-shadow(2px 2px 0 #000); }
 :root[data-skin="block"] .symbolbar .kw { color: #24419a; }
 :root[data-skin="block"] .symbolbar .sym { font-family: var(--mono); font-size: 22px; }
-:root[data-skin="block"] .symbolbar .bulb { background: #ffd83d; color: #3a2a00; border: 2px solid #000; box-shadow: var(--bevel); }
+:root[data-skin="block"] .topbar .bulb { background: #ffd83d; color: #3a2a00; border: 2px solid #000; box-shadow: var(--bevel); }
 :root[data-skin="block"] .btn.run { background: #4caf2a; color: #fff; text-shadow: 2px 2px 0 #1d4a10; font-size: 19px; }
 :root[data-skin="block"] .btn.download { background: #4fd6d6; color: #08302f; }
 :root[data-skin="block"] .btn.download.dirty::after { background: #ff4b3e; border: 2px solid #000; }
@@ -649,7 +659,7 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 :root[data-skin="block"] .editor .cm-cursor { border-left: 10px solid color-mix(in srgb, var(--accent) 55%, transparent); }
 :root[data-skin="block"] .editor .cm-line.cm-stmt-ok { box-shadow: inset 6px 0 0 var(--ok); }
 :root[data-skin="block"] .editor .cm-line.cm-stmt-error { box-shadow: inset 6px 0 0 var(--err); }
-:root[data-skin="block"] :is(.result-block, .sheet, .symhelp, .tbl, .toast) { border: 3px solid #000; box-shadow: 6px 6px 0 rgba(0, 0, 0, .35); }
+:root[data-skin="block"] :is(.result-block, .sheet, .symhelp, .tbl, .toast, .empty-box) { border: 3px solid #000; box-shadow: 6px 6px 0 rgba(0, 0, 0, .35); }
 :root[data-skin="block"] .results { background: transparent; }
 :root[data-skin="block"] :is(.result-time, .splitter) { color: #fff; text-shadow: 2px 2px 0 #000; background: transparent; }
 :root[data-skin="block"] .splitter span { background: #000; height: 6px; }
@@ -721,7 +731,7 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
     --hl-comment: #8FA6E8; --hl-ident: #B8FF5A; --hl-operator: #C9D6FF; --hl-punct: #C9D6FF;
     color-scheme: dark;
 }
-:root[data-skin="flat"][data-effective="dark"] .symbolbar .bulb { background: #FFFFFF; color: #000080; }
+:root[data-skin="flat"][data-effective="dark"] .topbar .bulb { background: #FFFFFF; color: #000080; }
 
 /* Hacker: schwarz und Neon-Grün (hell: weiß mit kräftigeren Hacker-Farben) */
 :root[data-skin="hacker"] {
@@ -816,3 +826,5 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 :root:is([data-skin="hund"], [data-skin="schaf"]) :is(.topbar, .runbar, .bottomnav, .tabbar) { background: color-mix(in srgb, var(--panel) 70%, transparent); }
 :root:is([data-skin="hund"], [data-skin="schaf"]) :is(.project-name, .qp-brand, .sidebar-title, .lp-head-title) { font-family: "Pixelify Sans", var(--sans); letter-spacing: .02em; }
 :root:is([data-skin="hund"], [data-skin="schaf"]) .project-name { font-size: 19px; }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .topbar .bulb { color: var(--accent-text); }
+:root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .topbar .histbtn { background: transparent; border-color: var(--border); color: var(--accent); }
