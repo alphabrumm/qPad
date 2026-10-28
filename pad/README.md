@@ -33,6 +33,33 @@ Zwischendurch wird alles automatisch im Browser gesichert; ein versehentliches N
 * Eigene Vorlagen: Datei in `vorlagen/` legen und in `vorlagen/vorlagen.json` eintragen
   (`.sqlite`, MySQL-`.sql` oder `.zip`).
 
+## Layout (wie JPad)
+
+* **Quer** (iPad quer, Laptop – ab 900 px und breiter als hoch): Tabellen | Editor mit Ergebnis | Lernpfad nebeneinander.
+  Der Lernpfad hat zwei Breiten (38 % / 50 %) und „volle Breite“; der Knopf im Editor-Kopf blendet ihn aus und wieder ein.
+  Projekte mit Lernpfad starten mit zugeklappten Tabellen und breitem Lernpfad.
+* **Hochkant** (iPad hoch, Handy): eine Ansicht, unten die Reiter **Lernpfad · Code · Tabellen**.
+  Wechselt man bei offener Bildschirmtastatur zu Lernpfad oder Tabellen, bleibt die Tastatur offen (der Editor wird „geparkt“).
+  Ein Tipp auf einen Spaltennamen oder „Inhalt“ springt zurück zum Code.
+* **Hinweis „Dreh dein iPad hochkant“**: geht im Querformat die Bildschirmtastatur auf, einmal pro Sitzung (abschaltbar für 4 Wochen).
+
+## Lernpfade
+
+* Ein Lernpfad ist eine HTML-Seite, die im Projekt mitreist (Feld `lernpfadHtml` der Projektdatei, Bilder als data-URIs).
+  Er läuft in einem abgeschotteten iframe; sein localStorage (z. B. Häkchen) wird per postMessage je Projekt gemerkt.
+* **☰ → Lernpfad einbetten**: HTML-Datei oder ZIP (index.html mit Unterordnern wie `img/`). **Lernpfad entfernen** ebenso im Menü.
+* **Per Link**: `…/?lernpfad=<Adresse>` – HTML, ZIP oder Projektdatei (`.sqlprojekt.json` mit eingebettetem Lernpfad).
+  Kombinierbar mit `&projekt=<Projektdatei>` oder `&vorlage=<Datenbank>`, `&neu` erzwingt eine frische Kopie.
+  Beim ersten Aufruf entsteht ein neues Projekt, derselbe Link öffnet danach dieses Projekt mit dem Stand des Schülers.
+* Ein Lernpfad kann seine Datenbank selbst nennen: `<meta name="qpad-vorlage" content="pausenkiosk.sqLite">`
+  (Dateiname aus `vorlagen/` oder Adresse relativ zum Lernpfad). Sie wird beim Öffnen per Link geladen bzw. beim Einbetten angeboten.
+* **„In QPad einfügen“**: Knöpfe im Lernpfad schicken `parent.postMessage({ type: "qpad-insert", sql: "…" }, "*")`;
+  QPad hängt die Anweisung ans Ende des geöffneten Skripts und setzt den Cursor hinein (hochkant: Wechsel zum Code).
+* **Demo** (`learn/demo/Lernpfad-Pausenkiosk.html`, auch als ZIP): „Der Pausenkiosk“ mit der Vorlage
+  `pausenkiosk.sqLite` (Schüler/innen der 9. Klassen, Produkte, Einkäufe). Öffnet sich beim allerersten Start,
+  später über **☰ → Demo laden**. Quelle der Datenbank: `vorlagen-quellen/pausenkiosk.sql`
+  (erzeugt mit `erzeuge_pausenkiosk.py`, in QPad importiert und als .sqlite exportiert).
+
 ## Server-Anforderungen
 
 Nur ein **HTTP(S)-Server, der statische Dateien ausliefert**. Kein SQL-Server, kein PHP, keine Datenbank.
@@ -65,5 +92,7 @@ node build.mjs           # erzeugt dist/ (benötigt esbuild; Pfad per ESBUILD=�
 * `src/db.ts`, `src/worker.ts`, `src/sqlFunctions.ts` – SQLite im Web-Worker
 * `src/importers.ts` – Projektdateien, SQLite-, MySQL- und ZIP-Import
 * `src/project.ts` – Projektformat und lokale Speicherung
+* `src/lernpfad.ts` – Lernpfade aus HTML, ZIP oder Link laden, Bilder einbetten, localStorage-Ersatz im iframe
+* `public/learn/demo/` – Demo-Lernpfad „Der Pausenkiosk“ mit Bildern
 
 Hinweis: Safari löscht Website-Daten, die 7 Tage nicht benutzt wurden. Deshalb ist der Download am Stundenende der eigentliche Speicherort.

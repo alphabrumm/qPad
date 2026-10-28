@@ -9,7 +9,7 @@ import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, s
 import { defaultKeymap, history, historyKeymap, indentWithTab, redo, undo } from "@codemirror/commands";
 import { bracketMatching, indentOnInput } from "@codemirror/language";
 import { Diagnostic, lintGutter, setDiagnostics } from "@codemirror/lint";
-import { EditorSelection, EditorState, Extension, RangeSetBuilder, StateEffect, StateField } from "@codemirror/state";
+import { Compartment, EditorSelection, EditorState, Extension, RangeSetBuilder, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, DecorationSet, EditorView, highlightActiveLineGutter, keymap, lineNumbers, ViewUpdate } from "@codemirror/view";
 import type { SQLStatement } from "../../src/client/compiler/parser/Parser.js";
 import { compile, SemicolonAngel } from "./compile.js";
@@ -43,6 +43,8 @@ export class SqlEditor {
     private compileTimer: any = null;
     private silent = false;
     private extensions: Extension[] = [];
+    /** „geparkt“ (Reiter-Layout mit offener Tastatur, andere Ansicht sichtbar): nimmt keine Eingaben an */
+    private parking = new Compartment();
 
     constructor(parent: HTMLElement, private db: PadDatabase, private cb: EditorCallbacks) {
 
@@ -71,6 +73,7 @@ export class SqlEditor {
                 autocorrect: "off", autocapitalize: "off", spellcheck: "false", "aria-label": "SQL-Editor"
             }),
             EditorView.updateListener.of((u: ViewUpdate) => this.onUpdate(u)),
+            this.parking.of([]),
         ];
 
         this.extensions = extensions;
@@ -155,6 +158,34 @@ export class SqlEditor {
             scrollIntoView: true, userEvent: "input"
         });
         view.focus();
+    }
+
+    /**
+     * Anweisungen aus dem Lernpfad ans Ende des Skripts anhängen (mit Leerzeile davor) und den Cursor
+     * hineinsetzen, damit „▶ Ausführen“ genau sie ausführt. Ohne focus bleibt die Bildschirmtastatur zu.
+     */
+    appendBlock(sql: string, focus = false) {
+        const view = this.view;
+        const doc = view.state.doc;
+        const text = doc.toString();
+        const trimmedEnd = text.replace(/\s+$/, "");
+        const prefix = trimmedEnd.length == 0 ? "" : "\n\n";
+        const body = sql.replace(/\s+$/, "");
+        const insert = prefix + body + "\n";
+        const from = trimmedEnd.length;
+        const firstStmtEnd = body.indexOf(";");
+        const cursor = from + prefix.length + (firstStmtEnd >= 0 ? firstStmtEnd : body.length);
+        view.dispatch({
+            changes: { from, to: doc.length, insert },
+            selection: EditorSelection.cursor(cursor),
+            scrollIntoView: true, userEvent: "input"
+        });
+        if (focus) view.focus();
+        this.compileNow();
+    }
+
+    setParked(on: boolean) {
+        this.view.dispatch({ effects: this.parking.reconfigure(on ? EditorState.readOnly.of(true) : []) });
     }
 
     scheduleCompile() {

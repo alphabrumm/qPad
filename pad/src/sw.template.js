@@ -26,9 +26,9 @@ self.addEventListener("fetch", e => {
         }).catch(() => caches.match(isList ? req : "index.html")));
         return;
     }
-    // sonst Cache zuerst; Vorlagen werden beim ersten Abruf zwischengespeichert
+    // sonst Cache zuerst; Vorlagen und Lernpfade werden beim ersten Abruf zwischengespeichert
     e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => {
-        if (r.ok && url.pathname.includes("/vorlagen/")) {
+        if (r.ok && (url.pathname.includes("/vorlagen/") || url.pathname.includes("/learn/"))) {
             const copy = r.clone();
             caches.open(CACHE).then(c => c.put(req, copy));
         }

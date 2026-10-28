@@ -17,7 +17,7 @@ export type Opened =
 
 const isSqlite = (b: Uint8Array) => b.length > 16 && String.fromCharCode(...b.subarray(0, 15)) == "SQLite format 3";
 const isZlib = (b: Uint8Array) => b.length > 2 && b[0] == 0x78 && [0x01, 0x5e, 0x9c, 0xda].includes(b[1]);
-const isZip = (b: Uint8Array) => b.length > 4 && b[0] == 0x50 && b[1] == 0x4b && b[2] == 0x03 && b[3] == 0x04;
+export const isZip = (b: Uint8Array) => b.length > 4 && b[0] == 0x50 && b[1] == 0x4b && b[2] == 0x03 && b[3] == 0x04;
 
 async function inflate(data: Uint8Array, format: "deflate" | "deflate-raw"): Promise<Uint8Array> {
     if (typeof (globalThis as any).DecompressionStream == "undefined") {
@@ -28,8 +28,10 @@ async function inflate(data: Uint8Array, format: "deflate" | "deflate-raw"): Pro
     return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-/** Liest den ersten passenden Eintrag (.sql/.sqlite/.db) aus einer ZIP-Datei */
-async function unzipFirst(zip: Uint8Array): Promise<{ name: string, data: Uint8Array }> {
+export type ZipEntry = { name: string, read: () => Promise<Uint8Array> };
+
+/** Liest das Inhaltsverzeichnis einer ZIP-Datei; die Einträge werden erst bei read() entpackt */
+export function readZip(zip: Uint8Array): ZipEntry[] {
     const dv = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
     // Zentralverzeichnis suchen (End of central directory)
     let eocd = -1;
@@ -40,25 +42,33 @@ async function unzipFirst(zip: Uint8Array): Promise<{ name: string, data: Uint8A
     const count = dv.getUint16(eocd + 10, true);
     let p = dv.getUint32(eocd + 16, true);
     const dec = new TextDecoder();
-    const entries: { name: string, method: number, compSize: number, localOffset: number }[] = [];
+    const entries: ZipEntry[] = [];
     for (let i = 0; i < count; i++) {
         if (dv.getUint32(p, true) != 0x02014b50) break;
         const method = dv.getUint16(p + 10, true);
         const compSize = dv.getUint32(p + 20, true);
         const nameLen = dv.getUint16(p + 28, true), extraLen = dv.getUint16(p + 30, true), commentLen = dv.getUint16(p + 32, true);
-        const localOffset = dv.getUint32(p + 42, true);
+        const lp = dv.getUint32(p + 42, true);
         const name = dec.decode(zip.subarray(p + 46, p + 46 + nameLen));
-        entries.push({ name, method, compSize, localOffset });
+        entries.push({
+            name, read: async () => {
+                const start = lp + 30 + dv.getUint16(lp + 26, true) + dv.getUint16(lp + 28, true);
+                const raw = zip.subarray(start, start + compSize);
+                return method == 0 ? raw.slice() : await inflate(raw, "deflate-raw");
+            }
+        });
         p += 46 + nameLen + extraLen + commentLen;
     }
+    return entries;
+}
+
+/** Liest den ersten passenden Eintrag (.sql/.sqlite/.db) aus einer ZIP-Datei */
+async function unzipFirst(zip: Uint8Array): Promise<{ name: string, data: Uint8Array }> {
+    const entries = readZip(zip);
     const entry = entries.find(e => /\.(sql|sqlite|db|sqlite3)$/i.test(e.name) && !e.name.startsWith("__MACOSX"))
         ?? entries.find(e => !e.name.endsWith("/"));
     if (!entry) throw new Error("Die ZIP-Datei enthält keine Datenbank.");
-    const lp = entry.localOffset;
-    const start = lp + 30 + dv.getUint16(lp + 26, true) + dv.getUint16(lp + 28, true);
-    const raw = zip.subarray(start, start + entry.compSize);
-    const data = entry.method == 0 ? raw.slice() : await inflate(raw, "deflate-raw");
-    return { name: entry.name, data };
+    return { name: entry.name, data: await entry.read() };
 }
 
 export async function openFile(bytes: Uint8Array, fileName: string, db: PadDatabase,

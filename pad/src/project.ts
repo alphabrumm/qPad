@@ -19,6 +19,12 @@ export type Project = {
     modified: number;
     /** Zeitpunkt des letzten Downloads (für den Hinweis "noch nicht heruntergeladen") */
     downloaded: number;
+    /** eingebetteter Lernpfad (eigenständige HTML-Seite, Bilder als data-URIs) – reist mit der Projektdatei */
+    lernpfadHtml?: string | null;
+    /** localStorage des Lernpfads (z. B. Häkchen „Station erledigt“), nur auf diesem Gerät */
+    lernpfadState?: string;
+    /** Herkunft bei Projekten aus einem Link (?lernpfad=… / ?projekt=…): derselbe Link öffnet wieder dieses Projekt */
+    source?: string;
 };
 
 export const FILE_FORMAT = "sql-ide-pad-projekt";
@@ -59,7 +65,8 @@ export function serializeProject(p: Project): string {
         database: p.database ? toBase64(p.database) : null,
         // Ausgangsdatenbank nur speichern, wenn sie sich vom aktuellen Stand unterscheidet
         template: p.template && !sameAsTemplate ? toBase64(p.template) : null,
-        templateIsDatabase: !!sameAsTemplate
+        templateIsDatabase: !!sameAsTemplate,
+        ...(p.lernpfadHtml ? { lernpfadHtml: p.lernpfadHtml } : {})
     }, null, 1);
 }
 
@@ -75,6 +82,7 @@ export function parseProjectFile(text: string, fileName: string): Project {
     p.database = json.database ? fromBase64(json.database) : null;
     p.template = json.template ? fromBase64(json.template) : (json.templateIsDatabase && p.database ? p.database.slice() : null);
     p.templateName = json.templateName ?? "aus Projektdatei";
+    if (typeof json.lernpfadHtml == "string" && json.lernpfadHtml.trim()) p.lernpfadHtml = json.lernpfadHtml;
     p.downloaded = Date.now();
     return p;
 }

@@ -17,6 +17,12 @@ import { highlightToHtml } from "./sqlLanguage.js";
 import { helpFor } from "./symbolHelp.js";
 import { translateSqliteError } from "./translate.js";
 import { icon } from "./icons.js";
+import { loadLernpfadUrl, nameFromUrl, readLernpfadFile, titleOf, vorlageOf, withStorageShim } from "./lernpfad.js";
+
+type View = "code" | "lernpfad" | "tabellen";
+type LpMode = "normal" | "wide" | "full" | "hidden";
+/** Demo-Lernpfad (liegt im Paket unter learn/demo) */
+const DEMO_LERNPFAD = "learn/demo/Lernpfad-Pausenkiosk.html";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: any) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -35,6 +41,10 @@ class App {
     saveTimer: any = null;
     busy = false;
     templates: Template[] = [];
+    /** Layout wie JPad: "split" (quer, nebeneinander) oder "tabs" (hochkant, Reiter unten) */
+    view: View = "code";
+    private layoutMq = matchMedia("(min-width: 900px) and (min-aspect-ratio: 1/1)");
+    private lpStateTimer: any = null;
 
     async start() {
         this.setupViewport();
@@ -58,9 +68,11 @@ class App {
 
         try { (navigator as any).storage?.persist?.(); } catch (e) { }
 
-        // Projekt aus URL (für Lehrkräfte: ?projekt=datei.sqlprojekt.json oder ?vorlage=datenbank.sqLite)
+        // Projekt aus URL (für Lehrkräfte: ?projekt=datei.sqlprojekt.json oder ?vorlage=datenbank.sqLite,
+        // mit Lernpfad: ?lernpfad=seite.html|.zip|.sqlprojekt.json, auch kombiniert)
         const params = new URLSearchParams(location.search);
-        const urlProject = params.get("projekt"), urlTemplate = params.get("vorlage");
+        const urlLernpfad = params.get("lernpfad");
+        const urlProject = urlLernpfad ? null : params.get("projekt"), urlTemplate = urlLernpfad ? null : params.get("vorlage");
         if (urlProject || urlTemplate) history.replaceState(null, "", location.pathname);
 
         let project: Project | undefined;
@@ -72,7 +84,15 @@ class App {
             console.warn("Lokaler Speicher nicht verfügbar", e);
         }
 
-        if (urlProject) {
+        if (urlLernpfad) {
+            if (project) this.project = project;
+            const ok = await this.openFromLink({
+                lernpfad: urlLernpfad, projekt: params.get("projekt"), vorlage: params.get("vorlage"),
+                fresh: params.get("neu") != null
+            });
+            if (!ok && !this.project) await this.setProject(project ?? newProject("Mein erstes Projekt"));
+            else if (!ok) await this.setProject(this.project);
+        } else if (urlProject) {
             await this.openFromUrl(urlProject);
         } else if (urlTemplate) {
             await this.setProject(project ?? newProject());
@@ -80,7 +100,9 @@ class App {
         } else if (project) {
             await this.setProject(project);
         } else {
-            await this.setProject(newProject("Mein erstes Projekt"));
+            // Allererster Start: Demo-Lernpfad öffnen und Willkommen zeigen (wie JPad)
+            const ok = await this.openFromLink({ lernpfad: DEMO_LERNPFAD, fresh: true }, true);
+            if (!ok) await this.setProject(newProject("Mein erstes Projekt"));
             this.showWelcome();
         }
         $("#loading").remove();
@@ -107,6 +129,9 @@ class App {
         this.switchScript(p.activeScript, true);
         this.renderSchema();
         this.clearResults();
+        this.showLernpfad();
+        if (p.lernpfadHtml) this.showLernpfadLayout();
+        else this.setView("code");
         await this.saveLocal();
     }
 
@@ -511,6 +536,7 @@ class App {
             (el.querySelector(".show") as HTMLElement).onclick = () => this.showTableContent(t);
             el.querySelectorAll<HTMLElement>("[data-ins]").forEach(b => b.onclick = () => {
                 if (b.classList.contains("tname") && !el.classList.contains("open")) { toggle(); return; }
+                if (this.isTabs()) this.setView("code");
                 this.editor.insert(b.dataset.ins);
             });
             tree.appendChild(el);
@@ -524,7 +550,7 @@ class App {
         app.classList.toggle("sidebar-closed", !open);
     }
     closeSidebarIfOverlay() {
-        if (window.innerWidth < 900) this.toggleSidebar(false);
+        if (this.isTabs()) this.setView("code");
     }
 
     // ------------------------------------------------------------------ Menüs & Dialoge
@@ -548,6 +574,8 @@ class App {
         $("#drawerDbName").textContent = this.project.templateName;
         ($("#drawerDbUndo") as HTMLButtonElement).disabled = this.dbUndo.length == 0;
         $("#drawerShare").style.display = (navigator as any).canShare ? "" : "none";
+        $("#drawerLpRemove").style.display = this.project.lernpfadHtml ? "" : "none";
+        $("#drawerLpAdd").querySelector("span").textContent = this.project.lernpfadHtml ? "Lernpfad ersetzen" : "Lernpfad einbetten";
         this.renderSettings();
         let projects: Project[] = [];
         try { projects = await LocalStore.list(); } catch (e) { }
@@ -677,10 +705,10 @@ class App {
         return ok && this.templates.length > 0;
     }
 
-    async createProjectFromTemplate(t: Template) {
+    async createProjectFromTemplate(t: Template & { url?: string }) {
         this.showWait(`Lade „${t.name}“ …`);
         try {
-            const r = await fetch("vorlagen/" + t.file);
+            const r = await fetch(t.url ?? "vorlagen/" + t.file);
             if (!r.ok) throw new Error(`Die Vorlage konnte nicht geladen werden (HTTP ${r.status}).`);
             const bytes = new Uint8Array(await r.arrayBuffer());
             const opened = await openFile(bytes, t.file, this.db, msg => this.showWait(msg));
@@ -782,6 +810,9 @@ class App {
             Vergessene Semikolons werden nach kurzer Zeit automatisch ergänzt.</p>
             <h3>Tastatur</h3>
             <p><kbd>⇧</kbd>+<kbd>↩</kbd> oder <kbd>⌘</kbd>+<kbd>↩</kbd> ausführen · <kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>↩</kbd> alles ausführen · <kbd>⌘</kbd>+<kbd>Z</kbd> rückgängig · <kbd>Ctrl</kbd>+<kbd>Leertaste</kbd> Vorschläge</p>
+            <h3>Lernpfade</h3>
+            <p>Ein Lernpfad ist eine Anleitung mit Aufgaben, die im Projekt mitreist. <b>Quer</b> steht er rechts neben dem Editor (die Pfeile machen ihn breiter oder schmaler), <b>hochkant</b> wechselst du unten zwischen <b>Lernpfad</b>, <b>Code</b> und <b>Tabellen</b>.
+            <b>☰ Menü → Demo laden</b> öffnet den Demo-Lernpfad „Der Pausenkiosk“; Lehrkräfte betten eigene Lernpfade (HTML-Seite oder ZIP mit Bildern) über <b>Lernpfad einbetten</b> ein.</p>
             <h3>Fehler gemacht?</h3>
             <p><b>↶ Daten</b> bzw. <b>☰ Menü → Letzte Datenänderung rückgängig</b> nimmt die letzte Änderung an den Daten zurück, <b>☰ Menü → Datenbank zurücksetzen</b> stellt den Ausgangszustand wieder her.</p>
             <p class="muted">QPad basiert auf der <a href="https://github.com/martin-pabst/SQL-IDE" target="_blank">SQL-IDE</a> von Martin Pabst (Compiler, Fehlermeldungen) · Editor: CodeMirror · Datenbank: SQLite (sql.js).</p>
@@ -789,13 +820,19 @@ class App {
     }
 
     showWelcome() {
+        const demo = !!this.project?.lernpfadHtml;
         this.dialog("Willkommen bei QPad!", `
             <p>Mit QPad schreibst und testest du SQL-Anweisungen direkt auf dem iPad – ohne Anmeldung.</p>
+            ${demo ? `<p>Gleich geht es los mit dem Demo-Lernpfad <b>„Der Pausenkiosk“</b>: ${this.isTabs()
+                ? "Er ist unten im Reiter <b>Lernpfad</b>, deine Anweisungen schreibst du im Reiter <b>Code</b>."
+                : "Er steht rechts neben dem Editor."} Mit <b>In QPad einfügen</b> übernimmst du Anweisungen direkt in den Editor.</p>` : ""}
             <ol>
-                <li>Wähle unter <b>☰ Menü → Vorlage laden</b> eine Beispieldatenbank oder öffne eine Projektdatei deiner Lehrkraft.</li>
+                <li>Unter <b>☰ Menü → Vorlage laden</b> findest du weitere Beispieldatenbanken; eine Projektdatei deiner Lehrkraft öffnest du über <b>☰ Menü → Projekt aus Datei öffnen</b>.</li>
                 <li>Schreibe SQL in den Editor und tippe auf <b>▶ Ausführen</b>.</li>
                 <li>Lade dein Projekt am Ende der Stunde mit <b>⬇</b> herunter.</li>
-            </ol>`, [
+            </ol>`, demo ? [
+            { label: "Los geht’s", primary: true, action: () => { } },
+        ] : [
             { label: "Vorlage wählen", primary: true, action: () => this.templateDialog() },
             { label: "Projektdatei öffnen", action: () => this.pickFile("project") },
         ]);
@@ -906,6 +943,320 @@ class App {
         (w.querySelector(".wait-text") as HTMLElement).textContent = text;
     }
     hideWait() { document.getElementById("wait")?.remove(); }
+
+
+    // ------------------------------------------------------------------ Layout (wie JPad)
+
+    isTabs(): boolean { return this.layoutMq.matches == false; }
+
+    private getLpMode(): LpMode {
+        try { const m = localStorage.getItem("qpad.lpMode") as LpMode; if (["normal", "wide", "full", "hidden"].includes(m)) return m; } catch (e) { }
+        return "wide";
+    }
+    private setLpMode(m: LpMode) {
+        const old = this.getLpMode();
+        try {
+            if (m == "full" || m == "hidden") { if (old != "full" && old != "hidden") localStorage.setItem("qpad.lpBefore", old); }
+            localStorage.setItem("qpad.lpMode", m);
+        } catch (e) { }
+        this.applyLayout();
+    }
+    private lpBefore(): LpMode {
+        try { const m = localStorage.getItem("qpad.lpBefore") as LpMode; if (m == "normal" || m == "wide") return m; } catch (e) { }
+        return "normal";
+    }
+
+    setupLayout() {
+        this.layoutMq.addEventListener?.("change", () => this.applyLayout());
+        document.querySelectorAll<HTMLElement>("#bottomnav [data-view]").forEach(b => {
+            b.addEventListener("pointerdown", e => e.preventDefault());  // Tastatur offen lassen
+            b.addEventListener("mousedown", e => e.preventDefault());
+            b.onclick = () => this.setView(b.dataset.view as View);
+        });
+        const layoutButton = (sel: string, f: () => void) => {
+            const b = $(sel);
+            b.addEventListener("pointerdown", e => e.preventDefault());
+            b.addEventListener("mousedown", e => e.preventDefault());
+            b.onclick = f;
+        };
+        layoutButton("#btnLpWide", () => {
+            const m = this.getLpMode();
+            this.setLpMode(m == "normal" ? "wide" : m == "full" ? this.lpBefore() : "normal");
+        });
+        layoutButton("#btnLpFull", () => this.setLpMode("full"));
+        layoutButton("#btnEditorWide", () => this.setLpMode(this.getLpMode() == "hidden" ? this.lpBefore() : "hidden"));
+        // Nachrichten aus dem Lernpfad (abgeschotteter iframe)
+        window.addEventListener("message", ev => this.onLernpfadMessage(ev));
+        this.applyLayout();
+    }
+
+    applyLayout() {
+        const app = $("#app");
+        const split = this.layoutMq.matches;
+        const m = this.getLpMode();
+        app.dataset.layout = split ? "split" : "tabs";
+        document.documentElement.dataset.layout = app.dataset.layout;
+        app.dataset.lp = m;
+        const setBtn = (sel: string, iconName: string, label: string, show = true) => {
+            const b = $(sel);
+            b.innerHTML = icon(iconName);
+            b.setAttribute("aria-label", label);
+            b.title = label;
+            b.hidden = !show;
+        };
+        setBtn("#btnLpWide", m == "normal" ? "expand" : "shrink",
+            m == "normal" ? "Lernpfad breiter anzeigen" : m == "wide" ? "Lernpfad schmaler anzeigen" : "Verkleinern: zurück zur Ansicht von vorher");
+        setBtn("#btnLpFull", "fit", "Lernpfad auf volle Fensterbreite", m == "wide");
+        setBtn("#btnEditorWide", m == "hidden" ? "lernpfad" : "expand",
+            m == "hidden" ? "Lernpfad wieder einblenden" : "Editor vergrößern (Lernpfad ausblenden)");
+        this.setView(this.view);
+    }
+
+    /** Ansicht im Reiter-Layout (hochkant): Lernpfad, Code oder Tabellen */
+    setView(view: View) {
+        const app = $("#app");
+        if (view == "lernpfad" && !this.project?.lernpfadHtml) view = "code";
+        this.view = view;
+        app.dataset.view = view;
+        document.querySelectorAll<HTMLElement>("#bottomnav [data-view]").forEach(b =>
+            b.setAttribute("aria-current", String(b.dataset.view == view)));
+        if (!this.editor) return;
+        /*
+         * Reiter-Layout mit offener Bildschirmtastatur: Beim Wechsel zu Lernpfad oder Tabellen bleibt die Tastatur
+         * offen. Der (unsichtbar „geparkte“) Editor behält den Fokus und nimmt solange keine Eingaben an.
+         */
+        const hold = view != "code" && this.isTabs() && this.editor.view.hasFocus
+            && document.documentElement.classList.contains("keyboard-open");
+        if (hold) {
+            app.dataset.kbhold = "true";
+            this.editor.setParked(true);
+        } else if (app.dataset.kbhold == "true") {
+            delete app.dataset.kbhold;
+            this.editor.setParked(false);
+            if (view != "code") this.editor.view.contentDOM.blur();
+        } else if (view != "code" && this.isTabs()) {
+            this.editor.view.contentDOM.blur();
+        }
+        if (view == "code") this.editor.view.requestMeasure();
+    }
+
+    /** Startansicht bei Projekten mit Lernpfad: quer Tabellen zu und Lernpfad breit, hochkant der Lernpfad */
+    showLernpfadLayout() {
+        if (this.isTabs()) { this.setView("lernpfad"); return; }
+        if (this.getLpMode() != "full") this.setLpMode("wide");
+        this.toggleSidebar(false);
+        this.setView("code");
+    }
+
+    // ------------------------------------------------------------------ Lernpfad
+
+    /** Zeigt den eingebetteten Lernpfad im abgeschotteten iframe an (oder blendet die Ansicht aus). */
+    showLernpfad() {
+        const html = this.project?.lernpfadHtml;
+        const host = $("#lernpfad");
+        host.innerHTML = "";
+        const app = $("#app");
+        if (html) {
+            app.dataset.lernpfad = "1";
+            $("#lpTitle").textContent = titleOf(html) ?? "Lernpfad";
+            const frame = document.createElement("iframe");
+            frame.className = "lp-frame";
+            frame.title = "Lernpfad";
+            frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals");
+            frame.setAttribute("referrerpolicy", "no-referrer");
+            frame.setAttribute("allow", "clipboard-write; fullscreen");
+            frame.srcdoc = withStorageShim(html, this.project.lernpfadState ?? "{}");
+            host.appendChild(frame);
+        } else {
+            delete app.dataset.lernpfad;
+            if (this.view == "lernpfad") this.setView("code");
+        }
+    }
+
+    private onLernpfadMessage(ev: MessageEvent) {
+        const frame = $("#lernpfad").querySelector("iframe");
+        if (!frame || ev.source != frame.contentWindow || !this.project) return;
+        const d = ev.data;
+        if (d?.type == "qpad-lernpfad-storage") {
+            // Häkchen usw. nur lokal merken; das Projekt gilt dadurch nicht als geändert
+            try { this.project.lernpfadState = JSON.stringify(d.state ?? {}); } catch (e) { return; }
+            clearTimeout(this.lpStateTimer);
+            this.lpStateTimer = setTimeout(() => LocalStore.save(this.project).catch(() => { }), 500);
+        } else if (d?.type == "qpad-insert" && typeof d.sql == "string" && d.sql.length < 20000) {
+            // „In QPad einfügen“ im Lernpfad: Anweisung ans Ende des geöffneten Skripts
+            if (this.isTabs()) this.setView("code");
+            this.editor.appendBlock(d.sql);
+            this.toast(`In „${this.project.scripts[this.project.activeScript].name}“ eingefügt. Tippe auf ▶ Ausführen.`, 3200);
+        }
+    }
+
+    pickLernpfad() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".html,.htm,.zip,text/html,application/zip";
+        input.style.display = "none";
+        document.body.appendChild(input);
+        input.onchange = async () => {
+            const file = input.files?.[0];
+            input.remove();
+            if (!file) return;
+            try {
+                const html = await readLernpfadFile(file);
+                if (this.project.lernpfadHtml && !confirm("Dieses Projekt hat schon einen Lernpfad. Er wird durch die neue Datei ersetzt.")) return;
+                this.project.lernpfadHtml = html;
+                this.project.lernpfadState = "{}";
+                this.touch();
+                this.showLernpfad();
+                this.showLernpfadLayout();
+                this.toast(`Lernpfad „${file.name}“ eingebettet. Er wird mit dem Projekt als Datei gesichert.`, 4000);
+                const v = vorlageOf(html);
+                if (v && this.db.databaseStructure.tables.length == 0
+                    && confirm(`Zu diesem Lernpfad gehört die Datenbank „${v}“. Jetzt laden?`)) {
+                    await this.createProjectFromTemplate(await this.templateFor(v, location.href));
+                }
+            } catch (e: any) {
+                alert("Lernpfad lässt sich nicht einbetten: " + (e?.message ?? e));
+            }
+        };
+        input.click();
+    }
+
+    removeLernpfad() {
+        if (!this.project.lernpfadHtml) return;
+        if (!confirm("Der Lernpfad wird aus diesem Projekt entfernt. Skripte und Datenbank bleiben erhalten.")) return;
+        this.project.lernpfadHtml = null;
+        this.project.lernpfadState = undefined;
+        this.touch();
+        this.showLernpfad();
+        this.toast("Lernpfad entfernt.");
+    }
+
+    /** Menü „Demo laden“: jedes Mal ein neues Projekt mit frischer Kopie des Demo-Lernpfads */
+    async loadDemo() {
+        await this.saveLocal();
+        await this.openFromLink({ lernpfad: DEMO_LERNPFAD, fresh: true });
+    }
+
+    /** Vorlage aus dem <meta name="qpad-vorlage">: Dateiname aus vorlagen/ oder Adresse relativ zum Lernpfad */
+    private async templateFor(v: string, base: string): Promise<Template & { url?: string }> {
+        await this.ensureTemplates();
+        const t = this.templates.find(t => t.file.toLowerCase() == v.toLowerCase());
+        if (t) return t;
+        const url = new URL(v, base).href;
+        return { name: nameFromUrl(url), file: v, url };
+    }
+
+    /**
+     * Link mit Lernpfad: qpad…/?lernpfad=<Adresse> (HTML, ZIP oder Projektdatei), optional &projekt=<Projektdatei>
+     * oder &vorlage=<Datenbank>. Beim ersten Aufruf entsteht ein neues Projekt; derselbe Link öffnet später dieses
+     * Projekt mit dem Stand des Schülers (außer mit &neu). Danach verschwinden die Parameter aus der Adresszeile.
+     */
+    async openFromLink(link: { lernpfad: string, projekt?: string | null, vorlage?: string | null, fresh?: boolean }, quiet = false): Promise<boolean> {
+        try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { }
+        const abs = (u?: string | null) => u ? new URL(u.trim(), location.href).href : null;
+        const lernpfad = abs(link.lernpfad)!, projekt = abs(link.projekt);
+        const source = [projekt, lernpfad, link.vorlage ? "vorlage:" + link.vorlage : null].filter(s => s).join(" + ");
+        try {
+            if (!link.fresh) {
+                const existing = (await LocalStore.list()).find(p => p.source == source);
+                if (existing) {
+                    if (this.project) await this.saveLocal();
+                    await this.setProject(existing);
+                    if (!quiet) this.toast(`„${existing.name}“ geöffnet – mit deinem bisherigen Stand.`);
+                    return true;
+                }
+            }
+            this.showWait("Lernpfad wird geladen …");
+            const loaded = await loadLernpfadUrl(lernpfad);
+            let p: Project;
+            let html: string | null = null;
+            if (loaded.kind == "project") {
+                const opened = await openFile(loaded.bytes, loaded.name + ".sqlprojekt.json", this.db, msg => this.showWait(msg));
+                if (opened.kind != "project") throw new Error("Die Projektdatei des Lernpfads ist nicht lesbar.");
+                p = opened.project;
+            } else {
+                html = loaded.html;
+                if (projekt) {
+                    const r = await fetch(projekt);
+                    if (!r.ok) throw new Error(`„${projekt}“ wurde nicht gefunden (Fehler ${r.status}).`);
+                    const opened = await openFile(new Uint8Array(await r.arrayBuffer()), nameFromUrl(projekt) + ".sqlprojekt.json", this.db, msg => this.showWait(msg));
+                    if (opened.kind != "project") throw new Error(`„${projekt}“ ist keine Projektdatei.`);
+                    p = opened.project;
+                } else {
+                    p = newProject(loaded.name);
+                }
+                p.lernpfadHtml = html;
+            }
+            if (!link.fresh) p.source = source;
+            if (this.project) await this.saveLocal();
+            await this.setProject(p);
+            // Datenbank: &vorlage=… oder die Vorlage, die der Lernpfad selbst nennt (nur wenn noch keine Datenbank da ist)
+            const v = link.vorlage ?? (html && !p.database ? vorlageOf(html) : undefined);
+            if (v) await this.createProjectFromTemplate(await this.templateFor(v, link.vorlage ? location.href : lernpfad));
+            this.hideWait();
+            if (!quiet) this.toast(`„${p.name}“ geöffnet.` + (loaded.kind == "html" && loaded.note ? " " + loaded.note : ""), 4000);
+            return true;
+        } catch (e: any) {
+            this.hideWait();
+            alert("Lernpfad lässt sich nicht öffnen: " + (e?.message ?? e));
+            return false;
+        }
+    }
+
+    /**
+     * iPad im Querformat und die Bildschirmtastatur geht auf (also keine echte Tastatur): einmal pro Sitzung
+     * empfehlen, QPad hochkant zu benutzen. „Nicht mehr zeigen“ gilt 4 Wochen (wie JPad).
+     */
+    private maybeRotateHint() {
+        const html = document.documentElement;
+        if (!html.classList.contains("touch") || html.classList.contains("phone")) return;
+        try {
+            if (sessionStorage.getItem("qpad.rotateHintShown")) return;
+            if (Date.now() < parseInt(localStorage.getItem("qpad.rotateHintOff") || "0")) return;
+        } catch (e) { }
+        setTimeout(() => {
+            if (window.innerWidth <= window.innerHeight || !html.classList.contains("keyboard-open")) return;
+            if (document.querySelector(".overlay")) return;
+            try { sessionStorage.setItem("qpad.rotateHintShown", "1"); } catch (e) { }
+            const overlay = this.overlay();
+            overlay.classList.add("is-rotate-layer");
+            const box = document.createElement("div");
+            box.className = "sheet is-rotate";
+            box.setAttribute("role", "dialog");
+            box.innerHTML = `
+                <div class="rotate-row">
+                    <div class="rotate-anim" aria-hidden="true">
+                        <svg viewBox="30 18 160 150">
+                            <g class="rot-arrows" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M169.8 65.1 A 66 66 0 0 0 50.2 65.1"/><path d="M60.8 57.7 L50.2 65.1 L49.1 52.2"/>
+                                <path d="M50.2 120.9 A 66 66 0 0 0 169.8 120.9"/><path d="M159.2 128.3 L169.8 120.9 L170.9 133.8"/>
+                            </g>
+                            <g class="rot-device">
+                                <rect x="66" y="63" width="88" height="60" rx="8" class="rot-body"/>
+                                <rect x="73" y="69" width="74" height="48" rx="3" class="rot-screen"/>
+                                <g class="rot-kb"><rect x="76" y="97" width="68" height="17" rx="2"/><path d="M80 102h60M80 106.5h60M80 111h60"/></g>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="rotate-text">
+                        <h2>Dreh dein iPad hochkant</h2>
+                        <p>Ohne echte Tastatur verdeckt die Bildschirmtastatur im Querformat fast den ganzen Editor.
+                        Benutze QPad <b>hochkant</b>, wenn du ohne Tastatur arbeitest, und <b>quer</b> mit einer echten Tastatur.</p>
+                    </div>
+                </div>
+                <div class="rotate-foot">
+                    <label><input type="checkbox" data-dontshow><span>Diesen Hinweis nicht mehr zeigen</span></label>
+                    <button type="button" class="btn primary" data-ok>Verstanden</button>
+                </div>`;
+            overlay.appendChild(box);
+            (box.querySelector("[data-ok]") as HTMLElement).onclick = () => {
+                if ((box.querySelector("[data-dontshow]") as HTMLInputElement).checked) {
+                    try { localStorage.setItem("qpad.rotateHintOff", String(Date.now() + 28 * 24 * 3600 * 1000)); } catch (e) { }
+                }
+                overlay.remove();
+            };
+        }, 600);
+    }
 
     // ------------------------------------------------------------------ Oberfläche
 
@@ -1087,6 +1438,9 @@ class App {
         menu("#drawerDbUndo", () => this.undoDatabase());
         menu("#drawerReset", () => this.resetDatabase());
         menu("#drawerHelp", () => this.showHelp());
+        menu("#drawerDemo", () => this.loadDemo());
+        menu("#drawerLpAdd", () => this.pickLernpfad());
+        menu("#drawerLpRemove", () => this.removeLernpfad());
         document.querySelectorAll<HTMLElement>("[data-theme-choice]").forEach(b => b.onclick = () => this.setThemeChoice(b.dataset.themeChoice));
         $("#fontSmaller").onclick = () => this.setFontSize(this.getFontSize() - 1);
         $("#fontBigger").onclick = () => this.setFontSize(this.getFontSize() + 1);
@@ -1095,7 +1449,7 @@ class App {
         $("#btnDownload").onclick = () => this.downloadProject();
         $("#btnCopyAll").onclick = () => this.copyCode(true);
         $("#btnCopyScript").onclick = () => this.copyCode(false);
-        $("#btnSchema").onclick = () => this.toggleSidebar();
+        $("#btnSchema").onclick = () => this.isTabs() ? this.setView(this.view == "tabellen" ? "code" : "tabellen") : this.toggleSidebar();
         $("#btnSidebarClose").onclick = () => this.toggleSidebar(false);
         $("#sidebarBackdrop").onclick = () => this.toggleSidebar(false);
         $("#btnRun").onclick = () => this.run(false);
@@ -1107,7 +1461,8 @@ class App {
         ["#btnRun", "#btnRunAll", "#btnUndo", "#btnRedo", "#btnCopyAll", "#btnCopyScript"].forEach(s => $(s).addEventListener("mousedown", e => e.preventDefault()));
 
         this.setupSplitter();
-        if (window.innerWidth >= 900) this.toggleSidebar(true); else this.toggleSidebar(false);
+        this.toggleSidebar(this.layoutMq.matches);
+        this.setupLayout();
 
         // Sicherung beim Verlassen/Wechseln der App
         document.addEventListener("visibilitychange", () => { if (document.visibilityState == "hidden") this.saveLocal(); });
@@ -1142,10 +1497,22 @@ class App {
     /** Höhe an die sichtbare Fläche anpassen (Bildschirmtastatur auf dem iPad) */
     setupViewport() {
         const vv = window.visualViewport;
+        const root = document.documentElement;
+        const touch = matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 1;
+        root.classList.toggle("touch", touch);
+        root.classList.toggle("phone", touch && Math.min(screen.width, screen.height) < 600);
+        let kbOpen = false;
         const set = () => {
             const h = vv ? vv.height : window.innerHeight;
-            document.documentElement.style.setProperty("--app-height", h + "px");
+            root.style.setProperty("--app-height", h + "px");
             if (vv) window.scrollTo(0, 0);
+            // Bildschirmtastatur offen? (die sichtbare Fläche ist deutlich kleiner als das Fenster)
+            const open = touch && !!vv && window.innerHeight - vv.height > 120;
+            if (open != kbOpen) {
+                kbOpen = open;
+                root.classList.toggle("keyboard-open", open);
+                if (open) this.maybeRotateHint();
+            }
         };
         set();
         vv?.addEventListener("resize", set);

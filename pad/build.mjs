@@ -67,6 +67,7 @@ const vorlagen = path.join(out, 'vorlagen');
 fs.mkdirSync(vorlagen, { recursive: true });
 const dbDir = path.join(here, '..', 'public', 'assets', 'databases');
 const known = {
+  'pausenkiosk.sqLite': ['Pausenkiosk', 'Schüler/innen, Snacks und Einkäufe am Schulkiosk (Demo-Lernpfad)'],
   'chinook.sqLite': ['Chinook (Musikshop)', 'Künstler, Alben, Titel, Kunden, Rechnungen'],
   'terra.sqLite': ['Terra (Geographie)', 'Länder, Städte, Flüsse, Berge'],
   'world1.sqLite': ['World', 'Länder, Städte und Sprachen der Welt'],
@@ -79,10 +80,14 @@ for (const f of fs.readdirSync(dbDir)) {
   fs.copyFileSync(path.join(dbDir, f), path.join(vorlagen, f));
   list.push({ name: known[f][0], description: known[f][1], file: f });
 }
+// Reihenfolge wie in „known“ (Pausenkiosk zuerst)
+list.sort((a, b) => Object.keys(known).indexOf(a.file) - Object.keys(known).indexOf(b.file));
 fs.writeFileSync(path.join(vorlagen, 'vorlagen.json'), JSON.stringify(list, null, 2));
 
 // Service Worker (Offline-Fähigkeit, nur über HTTPS aktiv)
-const shell = ['./', 'index.html', 'style.css', 'app.js', 'worker.js', 'sql-wasm.js', 'sql-wasm.wasm', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-512.png'];
+const shell = ['./', 'index.html', 'style.css', 'app.js', 'worker.js', 'sql-wasm.js', 'sql-wasm.wasm', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-512.png',
+  // Demo-Lernpfad samt Datenbank: auch beim allerersten Start offline verfügbar
+  'learn/demo/Lernpfad-Pausenkiosk.html', 'vorlagen/pausenkiosk.sqLite'];
 const hash = crypto.createHash('sha1');
 for (const f of shell.slice(1)) if (fs.existsSync(path.join(out, f))) hash.update(fs.readFileSync(path.join(out, f)));
 const version = hash.digest('hex').substring(0, 10);

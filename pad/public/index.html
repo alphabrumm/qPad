@@ -54,6 +54,7 @@
                     <div id="scriptTabs" class="tabs"></div>
                     <button id="btnUndo" class="iconbtn small" title="Rückgängig" aria-label="Rückgängig">↶</button>
                     <button id="btnRedo" class="iconbtn small" title="Wiederholen" aria-label="Wiederholen">↷</button>
+                    <button id="btnEditorWide" class="iconbtn small layoutbtn lp-only"></button>
                 </div>
                 <div id="symbolbar" class="symbolbar" aria-label="Eingabehilfen"></div>
                 <div id="editor" class="editor"></div>
@@ -69,7 +70,22 @@
 
             <div id="results" class="results"></div>
         </section>
+
+        <section id="lpPane" class="lp-pane" aria-label="Lernpfad">
+            <div class="lp-head">
+                <span class="lp-head-title"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21c0-3.5 3-4.5 6-5.5s5-2.5 3.5-5S9 7 10 5"/><path d="M10 5V2.5l5 1.8-5 1.7"/><circle cx="5" cy="21" r="0.6" fill="currentColor"/></svg><span id="lpTitle">Lernpfad</span></span>
+                <button id="btnLpFull" class="iconbtn small layoutbtn"></button>
+                <button id="btnLpWide" class="iconbtn small layoutbtn"></button>
+            </div>
+            <div id="lernpfad" class="lp-host"></div>
+        </section>
     </main>
+
+    <nav id="bottomnav" class="bottomnav" aria-label="Ansicht">
+        <button data-view="lernpfad" class="lp-only"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21c0-3.5 3-4.5 6-5.5s5-2.5 3.5-5S9 7 10 5"/><path d="M10 5V2.5l5 1.8-5 1.7"/><circle cx="5" cy="21" r="0.6" fill="currentColor"/></svg><span>Lernpfad</span></button>
+        <button data-view="code"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 8l-4 4 4 4M15 8l4 4-4 4"/></svg><span>Code</span></button>
+        <button data-view="tabellen"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg><span>Tabellen</span></button>
+    </nav>
 
     <div id="drawerBackdrop" class="qp-drawer-backdrop"></div>
     <aside id="drawer" class="qp-drawer" aria-label="Menü" inert>
@@ -85,6 +101,11 @@
                 <button id="drawerSave"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg><span>Projekt als Datei sichern</span></button>
                 <button id="drawerShare"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg><span>Projekt teilen …</span></button>
                 <button id="drawerRename"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span>Projekt umbenennen</span></button>
+            </div>
+            <div class="qp-menu-actions qp-menu-group">
+                <button id="drawerDemo"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/></svg><span>Demo laden</span></button>
+                <button id="drawerLpAdd"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21c0-3.5 3-4.5 6-5.5s5-2.5 3.5-5S9 7 10 5"/><path d="M10 5V2.5l5 1.8-5 1.7"/><circle cx="5" cy="21" r="0.6" fill="currentColor"/></svg><span>Lernpfad einbetten</span></button>
+                <button id="drawerLpRemove"><svg class="jp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg><span>Lernpfad entfernen</span></button>
             </div>
             <ul id="projectList" class="qp-projectlist"></ul>
 

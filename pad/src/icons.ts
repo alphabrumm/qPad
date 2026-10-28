@@ -44,6 +44,11 @@ const paths: Record<string, string> = {
     shrink: '<path d="M20 10h-6V4M4 14h6v6"/><path d="M14 10l7-7M10 14l-7 7"/>',
     copyFile: '<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/><path d="M11.5 13l-1.5 1.5 1.5 1.5M16.5 13l1.5 1.5-1.5 1.5"/>',
     copyAll: '<rect x="10" y="10" width="11" height="11" rx="2"/><path d="M17 10V8a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/><path d="M13 6V4a1.5 1.5 0 0 0-1.5-1.5H4.5A1.5 1.5 0 0 0 3 4v7a1.5 1.5 0 0 0 1.5 1.5H6"/>',
+    lernpfad: '<path d="M5 21c0-3.5 3-4.5 6-5.5s5-2.5 3.5-5S9 7 10 5"/><path d="M10 5V2.5l5 1.8-5 1.7"/><circle cx="5" cy="21" r="0.6" fill="currentColor"/>',
+    fit: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    table: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',
+    result: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>',
+    demo: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/>',
     split: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M13 4v16"/>',
 };
 
