@@ -28,15 +28,21 @@ jobs:
     steps:
       - name: FTP-Zugang vorhanden?
         env:
-          S: ${{ secrets.FTP_SERVER }}
-          U: ${{ secrets.FTP_USERNAME }}
+          S: ${{ secrets.FTP_SERVER || vars.FTP_SERVER }}
+          U: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
           P: ${{ secrets.FTP_PASSWORD }}
-          D: ${{ secrets.FTP_DIR }}
+          D: ${{ secrets.FTP_DIR || vars.FTP_DIR }}
         run: |
-          if [ -z "$S" ] || [ -z "$U" ] || [ -z "$P" ] || [ -z "$D" ]; then
-            echo "::error::FTP-Secrets fehlen (FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, FTP_DIR) – unter Settings → Secrets and variables → Actions anlegen."
+          missing=""
+          [ -z "$S" ] && missing="$missing FTP_SERVER"
+          [ -z "$U" ] && missing="$missing FTP_USERNAME"
+          [ -z "$P" ] && missing="$missing FTP_PASSWORD"
+          [ -z "$D" ] && missing="$missing FTP_DIR"
+          if [ -n "$missing" ]; then
+            echo "::error::Für diesen Workflow nicht sichtbar:$missing – als Repository-Secret (Settings → Secrets and variables → Actions → Tab „Secrets“, Bereich „Repository secrets“) im Repo alphabrumm/qPad anlegen; Environment- oder Dependabot-Secrets sieht dieser Workflow nicht."
             exit 1
           fi
+          echo "FTP-Zugang vollständig."
       - name: Getestetes Paket von GitHub Pages holen
         env:
           GH_TOKEN: ${{ github.token }}
@@ -69,10 +75,10 @@ jobs:
       # Übertragen werden nur geänderte Dateien (Merkdatei .ftp-deploy-sync-state.json im Zielordner).
       - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
+          server: ${{ secrets.FTP_SERVER || vars.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_DIR }}
+          server-dir: ${{ secrets.FTP_DIR || vars.FTP_DIR }}
           local-dir: ./dist-qpad/
           protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
           log-level: standard
