@@ -1,0 +1,78 @@
+name: QPad auf den Webspace (qpad.pandapy.de)
+# Ablauf wie bei JPad: Bauen & auf GitHub Pages testen → erst nach ausdrücklichem „Go“
+# wird genau der getestete Stand per FTP auf den Webspace übertragen.
+#
+# Ausgelöst durch
+#  - ein Tag „live-…“ auf dem getesteten Commit (z. B. live-2026-10-28-1),
+#  - einen Push auf den Zweig „live“ (git push origin main:live) oder
+#  - von Hand (Actions → diesen Workflow → Run workflow; dann der neueste Pages-Stand von main).
+# Übertragen wird das unveränderte Paket aus dem erfolgreichen Pages-Lauf dieses Commits –
+# also Byte für Byte das, was auf alphabrumm.github.io/qPad getestet wurde.
+#
+# Benötigt die Repository-Secrets FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, FTP_DIR
+# (optional die Variable FTP_PROTOCOL, Standard ftps).
+on:
+  workflow_dispatch:
+  push:
+    tags: ['live-*']
+    branches: [live]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: webspace
+  cancel-in-progress: false
+jobs:
+  webspace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: FTP-Zugang vorhanden?
+        env:
+          S: ${{ secrets.FTP_SERVER }}
+          U: ${{ secrets.FTP_USERNAME }}
+          P: ${{ secrets.FTP_PASSWORD }}
+          D: ${{ secrets.FTP_DIR }}
+        run: |
+          if [ -z "$S" ] || [ -z "$U" ] || [ -z "$P" ] || [ -z "$D" ]; then
+            echo "::error::FTP-Secrets fehlen (FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, FTP_DIR) – unter Settings → Secrets and variables → Actions anlegen."
+            exit 1
+          fi
+      - name: Getestetes Paket von GitHub Pages holen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = "push" ]; then
+            # Der Pages-Lauf dieses Commits kann noch laufen (Push auf main und live gleichzeitig): bis 10 Minuten warten
+            for i in $(seq 1 40); do
+              RUN=$(gh run list -R "$REPO" --workflow pages.yml --commit "$SHA" --status success -L 1 --json databaseId -q '.[0].databaseId')
+              [ -n "$RUN" ] && break
+              PENDING=$(gh run list -R "$REPO" --workflow pages.yml --commit "$SHA" -L 1 --json status -q '.[0].status')
+              if [ -z "$PENDING" ] || [ "$PENDING" = "completed" ]; then break; fi
+              echo "Pages-Lauf für $SHA läuft noch ($PENDING) – warte …"; sleep 15
+            done
+          else
+            RUN=$(gh run list -R "$REPO" --workflow pages.yml --branch main --status success -L 1 --json databaseId -q '.[0].databaseId')
+          fi
+          if [ -z "$RUN" ]; then
+            echo "::error::Kein erfolgreicher Pages-Lauf für diesen Stand gefunden – erst auf main pushen, auf GitHub Pages testen, dann live schalten."
+            exit 1
+          fi
+          INFO=$(gh run view "$RUN" -R "$REPO" --json headSha,displayTitle,updatedAt -q '.headSha[0:7]+" – "+.displayTitle+" ("+.updatedAt+")"')
+          echo "Übertrage Pages-Lauf $RUN: $INFO"
+          echo "### Auf qpad.pandapy.de übertragen" >> "$GITHUB_STEP_SUMMARY"
+          echo "$INFO" >> "$GITHUB_STEP_SUMMARY"
+          gh run download "$RUN" -R "$REPO" -n q-pad-webspace -D dist-qpad
+          test -f dist-qpad/index.html && test -f dist-qpad/app.js
+      # Übertragen werden nur geänderte Dateien (Merkdatei .ftp-deploy-sync-state.json im Zielordner).
+      - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_DIR }}
+          local-dir: ./dist-qpad/
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          log-level: standard

@@ -29,6 +29,9 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/tools" esbuild@0.25 --no-audit --no-fund
       - name: App bauen
         run: PAD_DEPS="$RUNNER_TEMP/deps" ESBUILD="$RUNNER_TEMP/tools/node_modules/esbuild/lib/main.js" node pad/build.mjs pad/dist
+      # Dasselbe Paket für den Webspace (qpad-webspace.yml überträgt genau diesen Stand per FTP)
+      - uses: actions/upload-artifact@v4
+        with: { name: q-pad-webspace, path: pad/dist, include-hidden-files: true, retention-days: 30 }
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

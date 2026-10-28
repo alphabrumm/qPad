@@ -95,6 +95,14 @@ node build.mjs           # erzeugt dist/ (benötigt esbuild; Pfad per ESBUILD=�
 ```
 `dist/` komplett auf den Webserver kopieren – fertig.
 
+### Veröffentlichen auf qpad.pandapy.de (wie JPad)
+
+1. Push auf `main` → GitHub Pages (alphabrumm.github.io/qPad) zum Testen; der Lauf legt das Paket auch als Artefakt „q-pad-webspace“ ab.
+2. Testen.
+3. „Go“: Tag `live-JJJJ-MM-TT-n` auf den getesteten Commit **oder** `git push origin main:live`. Der Workflow
+   `qpad-webspace.yml` holt das unveränderte Paket aus dem Pages-Lauf dieses Commits und überträgt es per FTP(S)
+   (nur geänderte Dateien). Benötigt die Secrets `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR`.
+
 ## Dateien
 
 * `src/main.ts` – Oberfläche, Ausführen, Projekte, Dialoge
