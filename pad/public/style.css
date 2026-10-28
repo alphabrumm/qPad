@@ -577,11 +577,12 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 .qp-skin-swatch .jp-icon { width: 24px; height: 24px; }
 
 /* ---------- Blockwelt: alles pixelig und kantig wie in einem Blockspiel ----------
-   Texturen (Gras, Erde, Stein, Holz) sind kleine selbst erzeugte 16×16-Pixelbilder, vergrößert ohne Glättung. */
+   Texturen (Gras, Erde, Steinmauer, Holz): selbst erzeugte 32×32-Pixelbilder in tiles/, 4× ohne Glättung vergrößert
+   und mit 64 px angezeigt – auf Retina-Bildschirmen also Pixel für Pixel scharf (vorlagen-quellen/erzeuge_tiles.py). */
 :root[data-skin="block"] {
     --sans: "Pixelify Sans", "Courier New", monospace;
     --mono: "VT323", "Share Tech Mono", ui-monospace, Menlo, monospace;
-    --t-grass: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAACCUlEQVR42k1QsW7bMBR8kWRSEimLkCtZjhMlQBJASDtky9KxQ3+o/9O5nTIU6NyxU5cCHlIgsZFYcmqFsknblGG7wwOEvvG9u3t3d/Tp20cAeLh/8rvuarGJBz3GXK03APAynceD3st07nddAMCrPbz1ZLU8vxwCWEkaPY9LEXWfxyUL/JVar9Ta77qMse12K6LwZTq34kEPALTeoLDfdR/un3D5/zDGtNYAYJ+/D/yuG99BcaziO9jfeMffnat58JsU55fDDiX+l+ZaCn1tv/vB4TawP5DMHUEv5G8eKSWd3Q09m3pSGf7Hsn6Z+JEc9oeF3iyvDuanPpt6Tp4lACCVEZxKZZzPC8m8oqoZJad9gX4Ep/BVnvaFVMaalHI0nrUcbZqiqtMoROiklILT0XiG6KKqrdO+yLNkqdfIQVxR1SgfME8qg3zEWFIZFCiqWnDKKMmzhFGCb5GMWijhCE6LCkbjGaNEKqNN094mpdSmaeXRqoM2cCs4XWoCAK08VoKDKpbgFP8WVY3elnqNrvIsaVO1Ce2LNEyj8LA/bHe7PEtG4xlx7AMc9SMulVnq9bRaOLZTVPVJHAKAlUYhtplG4aSUrWN0FTCv7RBT2W+z3t9aM0pe1aoXcgB4VavtbgcAam24526aHSWdkziclDJgnsUoSaNQm6YtMc8SzJpnCWbDnNo0gtN/2DknvJr51tYAAAAASUVORK5CYII="); --t-dirt: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAACA0lEQVR42k2SQW+bQBCFnzHZNWIJWxIbWmznEFG7vfRS90f00J/SP5pjLok4pEqCREJFFy2bNWDSHqayctnDaGfme2/e5OePrwC268XV7WPgse16odouLyoAWToHkBdVls61sYHv5UXlJFGobQ8gkSKJQvoReCyRAoA2drdZamNL1ZZ1k0jhamMBAFjFUrXdw5PK0nlZN6tYXt0+AjBdv10vAt/Txq5iOf3+7ePlh+jm/tmdunlRiRnrh8Mwjr8b8+XyfXp+avfDX0zKuhnG0e4HF4BqO4IJPBb4nhRctR29hC4F14aZri9V6xCoNrasG5+zvKhU2wF4eFIASKhqO9P1NNSlalk3AErVHm2hebRWCg6E2tjAY442Ni+q7Xpx9IpM/E/oMWIm9UkUOgB2m6VquyydJ1KsYknbfM4AEIY2VgqeRKE21lnF8uFJScGJjYatYmm6/m3Pzf2zFNx0vavajv4dr5tEIbUdtfmcJVF4dfu42yzdsm6O9HQ72pYXvW8sYVB9t1kCmH5enydSTCYYxvGu/HN26u/78fquBCBmjLMTzk72/Qjg+q58HV+dRAo6vrb92/xk6bxULXHmRUVeB743zdJ3F3G078dav7T7fjgczkLxq6yFNzs79Wv9wqbOp4uFP+MUOSfwGLmepfPdZplEoRScVEnBA49RCikKUvB/VFE5D8L1dpsAAAAASUVORK5CYII="); --t-stone: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABeklEQVR42k1Sqw4lIQw9OxlSVUQDYiyGX7u/jMEimCBaRTArmp1sXYGeF/3z+/1yzswMoPeecxYRAGMMVS2lmBkz994B5JzvUgoAMwPg12MMInqex8+Z2cz8GYArhNB7/xgApJT23gCISER673vv3ruZmdnlwP70f7YxBoC1Vs4ZQIwRgIhca633fWOMLp2ZRYSIiIiZ55zMTET4V5f3z/M4pHtwhSGEnLMTAth7r7UuF9Na+2CIyF2dc5xzzqmqqioit49+jHvvlJInM+esta61YowOt9a6Pk/fmJn13kWklDLGEBFVnXO6ycs1eOohBEeqtbbWvG2t1VpLKa21vfflOay1VNUZRGSMEWN0D64khABAVe/vE9y6y3iep7XmqyEi5xwfzjnfZhZjTCl5fD6sqm63915r9StfufuL3E17Bsw8xkgpuR5mdkmttet93znnOUdVU0pzTgDv+xJRCMHhALiqUsr1rdBXc04i2nufc8zMN8/VhhD+Ar0XGZrvwP4vAAAAAElFTkSuQmCC"); --t-planks: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABXklEQVR42pWSsUrEQBRFryFkZgIhs1uEELBVCxFtxM7Wr7D2G/wXf8ZyG2GxULFYUGJIkUwMJG9SWVyJW6zFviIMkze8c+99B48Pd2VVF3lWVrVNExGvtXp++Tg9OXRdr1UEQGsFAIDr+qCsagDDOBZ55roegIifv8uFBRAbw+4iz0KtouXCNq0T8TZN+AaA+AlA0zqt1TCOsTGxMWVVh6v1Bruq+R523odnxwXRCUA9AIjKX8uF5ZDV01to0yQ2hlrLqtYqalrHVtf1Ip5sPAMIXNcTlJo4d7mwIp4WFXk2jOOsKly/ljPf9vm/Cm+uz2fiIs/I876pLy+OhnGkACIQLyQ3lTAjOsuX7N6eEBBUxHPIXFor2iB+Ej/FxoiftIoO7m+vsE/95fCbt5+4VwC4BFwcCvj8cgF5GI34yaZJ0zqbJjZN6CMbtFY0PdjeJV6RmNmVVc2x847treEHIhn3sN4KY9IAAAAASUVORK5CYII=");
+    --t-grass: url("tiles/grass.png"); --t-dirt: url("tiles/dirt.png"); --t-stone: url("tiles/stonebricks.png"); --t-planks: url("tiles/planks.png");
     --bg: #7d7d7d; --panel: #f3ead7; --panel-2: #e6d8b9; --border: #2a1d10;
     --text: #1e1a14; --muted: #5a4a36;
     --accent: #3f8f2a; --accent-text: #ffffff; --accent-soft: #d3ebbd;
@@ -594,7 +595,7 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
     color-scheme: light;
 }
 :root[data-skin="block"][data-effective="dark"] {
-    --t-stone: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABk0lEQVR42j2Swa6cMAxFb4GYZGoZITGL/sVb9v+/hw0hM7EMGbrwlA0KwtjH5+bXz89fACKyrus0Sa3qZyJKKYZAAADknEVEVYeUIgBVZeYQqLVPzpnoW+elKUURARBjHP73MAA+xMyIyOcws5mZGQAiIqJ+np/jOL5er/M8mX+HQCEMIQyv12ue5/M8U4rXdbXWWmtE9EXyrrXqtn15nKGU4o1TituWAQy1amufZVnWdV2W5TjM0VUVwDQJgG3LfgAwiMhxmNOrquMCcEUugJm9KYDOP7vQUooTevW6rv4aYyylADgO6wDUqje0S6tVvfe25VKK61LVEGg4DhORnDMAZvYd3IE/iajvu9Y+Mcac8xfJzGrVvu98gmuZJhER36qU4mEPLouZ72r/AUBrnxBARCGQC1TVgZl9luu7M749xhhV1an6vuufzz/7vs/zPI7jeZ5m1nVdSrFWba3t+/54PN7v9/v9JqLrujoR8dR83WmSGOO2ZRc6TXIc37vU952ZDXdYtep9SV3onSAz+0opxX90ixSxg15UlwAAAABJRU5ErkJggg=="); --t-planks: DARKurl("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABXklEQVR42pWSsUrEQBRFryFkZgIhs1uEELBVCxFtxM7Wr7D2G/wXf8ZyG2GxULFYUGJIkUwMJG9SWVyJW6zFviIMkze8c+99B48Pd2VVF3lWVrVNExGvtXp++Tg9OXRdr1UEQGsFAIDr+qCsagDDOBZ55roegIifv8uFBRAbw+4iz0KtouXCNq0T8TZN+AaA+AlA0zqt1TCOsTGxMWVVh6v1Bruq+R523odnxwXRCUA9AIjKX8uF5ZDV01to0yQ2hlrLqtYqalrHVtf1Ip5sPAMIXNcTlJo4d7mwIp4WFXk2jOOsKly/ljPf9vm/Cm+uz2fiIs/I876pLy+OhnGkACIQLyQ3lTAjOsuX7N6eEBBUxHPIXFor2iB+Ej/FxoiftIoO7m+vsE/95fCbt5+4VwC4BFwcCvj8cgF5GI34yaZJ0zqbJjZN6CMbtFY0PdjeJV6RmNmVVc2x847treEHIhn3sN4KY9IAAAAASUVORK5CYII=");
+    --t-stone: url("tiles/deepslatebricks.png"); --t-planks: url("tiles/darkplanks.png");
     --bg: #2f2f37; --panel: #1f1a14; --panel-2: #2c241a; --border: #000000;
     --text: #f1e7d0; --muted: #bba886;
     --accent: #6fcf3f; --accent-text: #10200a; --accent-soft: #24401a;
@@ -605,14 +606,14 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 }
 :root[data-skin="block"] *, :root[data-skin="block"] *::before, :root[data-skin="block"] *::after { border-radius: 0 !important; }
 :root[data-skin="block"] :is(.app, .topbar, .bottomnav, .sidebar, .lp-head, .tabbar, .runbar, .gutter, .editor .cm-gutters) { image-rendering: pixelated; }
-:root[data-skin="block"] .app { background: var(--t-stone) 0 0 / 48px 48px, var(--bg); }
+:root[data-skin="block"] .app { background: var(--t-stone) 0 0 / 64px 64px, var(--bg); }
 
 /* Kopfzeile und untere Reiter: Grasblock */
 :root[data-skin="block"] :is(.topbar, .bottomnav) {
-    background: var(--t-grass) 0 0 / 48px 48px repeat-x, var(--t-dirt) 0 0 / 48px 48px;
+    background: var(--t-grass) 0 0 / 64px 64px repeat-x, var(--t-dirt) 0 0 / 64px 64px;
     border-bottom: 3px solid #000; color: #fff;
 }
-:root[data-skin="block"] .bottomnav { border-top: 3px solid #000; border-bottom: 0; background: var(--t-dirt) 0 0 / 48px 48px; }
+:root[data-skin="block"] .bottomnav { border-top: 3px solid #000; border-bottom: 0; background: var(--t-dirt) 0 0 / 64px 64px; }
 :root[data-skin="block"] :is(.project-name, .saved-local, .bottomnav button) { color: #fff; text-shadow: 2px 2px 0 #000; }
 :root[data-skin="block"] .project-name { font-size: 21px; font-weight: 700; }
 :root[data-skin="block"] .bottomnav button[aria-current="true"] { color: #ffe14a; }
@@ -637,13 +638,13 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 
 /* Flächen: Pergament mit schwarzem Pixelrand, Seitenleisten aus Holz */
 :root[data-skin="block"] :is(.sidebar, .lp-pane) { border-color: #000; border-width: 3px; }
-:root[data-skin="block"] .sidebar { background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)), var(--t-planks) 0 0 / 48px 48px; }
-:root[data-skin="block"] :is(.lp-head, .tabbar, .runbar) { background: var(--t-planks) 0 0 / 48px 48px; border-color: #000; }
+:root[data-skin="block"] .sidebar { background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)), var(--t-planks) 0 0 / 64px 64px; }
+:root[data-skin="block"] :is(.lp-head, .tabbar, .runbar) { background: var(--t-planks) 0 0 / 64px 64px; border-color: #000; }
 :root[data-skin="block"] :is(.lp-head-title, .tab, .status, .tabbar .iconbtn.small) { color: #fff; text-shadow: 2px 2px 0 #000; }
 :root[data-skin="block"] .tab.active { color: #ffe14a; border-bottom-color: #ffe14a; }
 :root[data-skin="block"] .status:is(.status-error, .status-warning, .status-info) { text-shadow: none; border: 2px solid #000; }
 :root[data-skin="block"] .lp-head-title .jp-icon { color: #ffe14a; filter: drop-shadow(2px 2px 0 #000); }
-:root[data-skin="block"] .editor .cm-gutters { background: var(--t-planks) 0 0 / 48px 48px; color: #fff; border-right: 3px solid #000; text-shadow: 2px 2px 0 #000; }
+:root[data-skin="block"] .editor .cm-gutters { background: var(--t-planks) 0 0 / 64px 64px; color: #fff; border-right: 3px solid #000; text-shadow: 2px 2px 0 #000; }
 :root[data-skin="block"] .editor .cm-editor { font-size: calc(var(--editor-font, 16px) * 1.3); }
 :root[data-skin="block"] .editor .cm-cursor { border-left: 10px solid color-mix(in srgb, var(--accent) 55%, transparent); }
 :root[data-skin="block"] .editor .cm-line.cm-stmt-ok { box-shadow: inset 6px 0 0 var(--ok); }

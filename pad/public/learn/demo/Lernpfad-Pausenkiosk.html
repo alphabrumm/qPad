@@ -320,21 +320,21 @@ body, code, pre, kbd, button, input { font-variant-ligatures: none; font-feature
 <section class="station" id="s2" data-station="2">
   <div class="station-head"><div class="badge">2</div><div><small>Die Datenbank</small><h2>Drei Tabellen für einen Kiosk</h2></div></div>
   <p>Die Datenbank des Pausenkiosks besteht aus drei <strong>Tabellen</strong>. Jede Zeile einer Tabelle ist ein <strong>Datensatz</strong>, zum Beispiel ein Schüler oder ein Einkauf. Jede Spalte ist ein <strong>Attribut</strong> mit einem festen Datentyp.</p>
-  <div class="schema" aria-label="Die drei Tabellen schueler, produkt und kauf mit ihren Spalten">
-    <div class="tcard"><div class="tcard-head">schueler<small>24 Datensätze</small></div><ul>
+  <div class="schema" aria-label="Die drei Tabellen Schueler, Produkt und Kauf mit ihren Spalten">
+    <div class="tcard"><div class="tcard-head">Schueler<small>24 Datensätze</small></div><ul>
       <li class="pk">id <span class="ty">integer</span></li><li>vorname <span class="ty">varchar(30)</span></li><li>nachname <span class="ty">varchar(30)</span></li><li>klasse <span class="ty">varchar(3)</span></li><li>guthaben <span class="ty">decimal(5,2)</span></li></ul></div>
-    <div class="tcard"><div class="tcard-head">kauf<small>192 Datensätze</small></div><ul>
-      <li class="pk">id <span class="ty">integer</span></li><li>schueler_id <span class="ty">integer</span><span class="fk">→ schueler.id</span></li><li>produkt_id <span class="ty">integer</span><span class="fk">→ produkt.id</span></li><li>datum <span class="ty">date</span></li><li>pause <span class="ty">integer</span></li><li>anzahl <span class="ty">integer</span></li></ul></div>
-    <div class="tcard"><div class="tcard-head">produkt<small>16 Datensätze</small></div><ul>
+    <div class="tcard"><div class="tcard-head">Kauf<small>192 Datensätze</small></div><ul>
+      <li class="pk">id <span class="ty">integer</span></li><li>schueler_id <span class="ty">integer</span><span class="fk">→ Schueler.id</span></li><li>produkt_id <span class="ty">integer</span><span class="fk">→ Produkt.id</span></li><li>datum <span class="ty">date</span></li><li>pause <span class="ty">integer</span></li><li>anzahl <span class="ty">integer</span></li></ul></div>
+    <div class="tcard"><div class="tcard-head">Produkt<small>16 Datensätze</small></div><ul>
       <li class="pk">id <span class="ty">integer</span></li><li>name <span class="ty">varchar(40)</span></li><li>kategorie <span class="ty">varchar(20)</span></li><li>preis <span class="ty">decimal(4,2)</span></li><li>kalorien <span class="ty">integer</span></li><li>vegan <span class="ty">boolean</span></li></ul></div>
   </div>
   <p class="schema-say">🔑 = Primärschlüssel · → = Fremdschlüssel (verweist auf einen Datensatz einer anderen Tabelle)</p>
-  <p>Jeder Datensatz hat eine eindeutige Nummer, den <strong>Primärschlüssel</strong> <code>id</code>. In der Tabelle <code>kauf</code> steht deshalb nicht „Lena kauft eine Apfelschorle“, sondern nur zwei Nummern: <code>schueler_id</code> und <code>produkt_id</code>. Solche Verweise heißen <strong>Fremdschlüssel</strong>. So muss jeder Name und jeder Preis nur ein einziges Mal gespeichert werden.</p>
+  <p>Jeder Datensatz hat eine eindeutige Nummer, den <strong>Primärschlüssel</strong> <code>id</code>. In der Tabelle <code>Kauf</code> steht deshalb nicht „Lena kauft eine Apfelschorle“, sondern nur zwei Nummern: <code>schueler_id</code> und <code>produkt_id</code>. Solche Verweise heißen <strong>Fremdschlüssel</strong>. So muss jeder Name und jeder Preis nur ein einziges Mal gespeichert werden.</p>
   <h3>Die Tabellen in QPad ansehen</h3>
   <ol class="steps">
     <li><div>Quer siehst du die Tabellen links. Fehlen sie, tippe oben auf <span class="ui">Tabellen</span>. Hochkant tippst du unten auf den Reiter <span class="ui">Tabellen</span>.</div></li>
-    <li><div>Tippe auf den Namen <code>produkt</code>. Die Tabelle klappt auf und zeigt ihre Spalten mit Datentyp.</div></li>
-    <li><div>Tippe bei <code>produkt</code> auf <span class="ui">Inhalt</span>. Unter dem Editor erscheinen alle 16 Produkte.</div></li>
+    <li><div>Tippe auf den Namen <code>Produkt</code>. Die Tabelle klappt auf und zeigt ihre Spalten mit Datentyp.</div></li>
+    <li><div>Tippe bei <code>Produkt</code> auf <span class="ui">Inhalt</span>. Unter dem Editor erscheinen alle 16 Produkte.</div></li>
   </ol>
   <div class="note"><span class="note-title">Spaltennamen ohne Tippen</span><p>Ist eine Tabelle aufgeklappt, fügt ein Tipp auf einen Spaltennamen diesen direkt in den Editor ein. Das spart Tipparbeit und Tippfehler.</p></div>
   <p>Welcher Datentyp passt zu welcher Spalte? Tippe auf die Antwort, die du für richtig hältst:</p>
@@ -358,6 +358,7 @@ body, code, pre, kbd, button, input { font-variant-ligatures: none; font-feature
     <tr><td class="n">2</td><td>Laugenstange</td><td>Gebäck</td><td class="n">0.9</td><td class="n">230</td><td>true</td></tr>
     <tr><td class="n">3</td><td>Leberkässemmel</td><td>Warm</td><td class="n">2.8</td><td class="n">520</td><td>false</td></tr>
     <tr class="more"><td colspan="6">… 13 weitere</td></tr></table></div></div>
+  <div class="note"><span class="note-title">Tabellen ohne Tippen</span><p>Sobald du <code>from</code> und ein Leerzeichen geschrieben hast, öffnet QPad eine Liste mit allen Tabellen: <code>Kauf</code>, <code>Produkt</code> und <code>Schueler</code>. Tippe einfach auf die richtige. Tabellennamen beginnen in dieser Datenbank mit einem Großbuchstaben, Spaltennamen klein.</p></div>
   <p>Meist willst du aber nicht alles sehen. Dann zählst du die Spalten auf, durch Komma getrennt:</p>
   <div class="code" data-src="cols"></div>
   <div class="note"><span class="note-title">Strichpunkt nicht vergessen</span><p>Jede Anweisung endet mit einem Strichpunkt <code>;</code>. Vergisst du ihn, ergänzt QPad ihn nach kurzer Zeit selbst. So kannst du viele Anweisungen untereinander in ein Skript schreiben und jede einzeln ausführen.</p></div>
@@ -378,7 +379,7 @@ body, code, pre, kbd, button, input { font-variant-ligatures: none; font-feature
   <div class="anatomy" id="anatomy">
     <div class="anatomy-line">
       <button class="part" data-p="select" type="button"><span class="t-kw">select</span> name, preis</button>
-      <button class="part" data-p="from" type="button"><span class="t-kw">from</span> produkt</button>
+      <button class="part" data-p="from" type="button"><span class="t-kw">from</span> Produkt</button>
       <button class="part" data-p="where" type="button"><span class="t-kw">where</span> preis <span class="t-num">&lt;=</span> <span class="t-num">1.5</span>;</button>
     </div>
     <p class="anatomy-say" id="anatomySay">Tippe auf einen Teil der Anweisung.</p>
@@ -466,18 +467,18 @@ body, code, pre, kbd, button, input { font-variant-ligatures: none; font-feature
 <!-- ================= 7 ================= -->
 <section class="station" id="s7" data-station="7">
   <div class="station-head"><div class="badge">7</div><div><small>join</small><h2>Wer hat was gekauft?</h2></div></div>
-  <p>In der Tabelle <code>kauf</code> stehen nur Nummern. Um Namen zu sehen, <strong>verbindest</strong> du sie mit den Tabellen <code>schueler</code> und <code>produkt</code>. Zu jedem Einkauf sucht <code>join</code> den Datensatz, dessen <code>id</code> zum Fremdschlüssel passt:</p>
+  <p>In der Tabelle <code>Kauf</code> stehen nur Nummern. Um Namen zu sehen, <strong>verbindest</strong> du sie mit den Tabellen <code>Schueler</code> und <code>Produkt</code>. Zu jedem Einkauf sucht <code>join</code> den Datensatz, dessen <code>id</code> zum Fremdschlüssel passt:</p>
   <div class="joinviz" aria-label="Der Einkauf mit schueler_id 1 und produkt_id 13 wird mit Lena Huber und der Apfelschorle verbunden.">
-    <div class="jt"><b>schueler</b><div class="hl">1 · Lena · Huber</div><div>2 · Jonas · Wagner</div></div>
+    <div class="jt"><b>Schueler</b><div class="hl">1 · Lena · Huber</div><div>2 · Jonas · Wagner</div></div>
     <div class="arrow">← schueler_id</div>
-    <div class="jt"><b>kauf</b><div class="hl">1 · 13 · 2026-10-12</div><div>…</div></div>
+    <div class="jt"><b>Kauf</b><div class="hl">1 · 13 · 2026-10-12</div><div>…</div></div>
     <div class="arrow">produkt_id →</div>
-    <div class="jt"><b>produkt</b><div>12 · Wasser</div><div class="hl">13 · Apfelschorle</div></div>
+    <div class="jt"><b>Produkt</b><div>12 · Wasser</div><div class="hl">13 · Apfelschorle</div></div>
   </div>
   <div class="code" data-src="join"></div>
   <ol class="steps">
     <li><div>Hinter <code>join</code> steht die zweite Tabelle, hinter <code>on</code> die Bedingung, welche Datensätze zusammengehören.</div></li>
-    <li><div>Kommen Spaltennamen in mehreren Tabellen vor (wie <code>id</code>), schreibst du den Tabellennamen davor: <code>schueler.id</code>.</div></li>
+    <li><div>Kommen Spaltennamen in mehreren Tabellen vor (wie <code>id</code>), schreibst du den Tabellennamen davor: <code>Schueler.id</code>.</div></li>
     <li><div>Füge die Anweisung ein und führe sie aus. Was hat Lena am 12. Oktober gekauft?</div></li>
   </ol>
   <details class="reveal"><summary>Lösung anzeigen</summary><div class="answer">Eine Apfelschorle, in der 2. Pause.</div></details>
@@ -512,7 +513,7 @@ body, code, pre, kbd, button, input { font-variant-ligatures: none; font-feature
     <figure><img class="shot" src="img/fehler.jpg" width="900" height="560" alt="QPad mit der fehlerhaften Anweisung: Die Zeilen sind rot markiert, Getränk ist rot unterringelt, unter dem Editor steht: Zeile 3: Der Bezeichner Getränk ist an dieser Stelle nicht bekannt." loading="lazy">
     <figcaption>QPad markiert die Anweisung rot und erklärt den Fehler unter dem Editor. Ein Tipp auf die Meldung springt zur Fehlerstelle.</figcaption></figure>
     <p>Bei <code>Getränk</code> fehlen die Anführungszeichen. Ohne sie hält QPad das Wort für den Namen einer Spalte, und eine Spalte „Getränk“ gibt es nicht. Richtig ist <code>where kategorie = 'Getränk';</code></p></div></details>
-  <div class="note warn"><span class="note-title">Vorsicht: nicht jeder Fehler ist rot</span><p>Fehlt in <code>select name preis from produkt;</code> das Komma, meldet QPad <em>keinen</em> Fehler. SQL versteht dann „zeige <code>name</code> und nenne die Spalte <code>preis</code>“. Das Ergebnis hat nur eine Spalte mit der falschen Überschrift. Schau dir deshalb immer auch das Ergebnis an.</p></div>
+  <div class="note warn"><span class="note-title">Vorsicht: nicht jeder Fehler ist rot</span><p>Fehlt in <code>select name preis from Produkt;</code> das Komma, meldet QPad <em>keinen</em> Fehler. SQL versteht dann „zeige <code>name</code> und nenne die Spalte <code>preis</code>“. Das Ergebnis hat nur eine Spalte mit der falschen Überschrift. Schau dir deshalb immer auch das Ergebnis an.</p></div>
   <h3>Deinen Code kopieren, zum Beispiel für eine Abgabe</h3>
   <p>Oft sollst du deine Anweisungen auf einer Lernplattform abgeben, etwa in mebis. Dafür hat QPad oben in der Kopfzeile zwei Kopier-Knöpfe:</p>
   <div class="pair">
@@ -542,27 +543,27 @@ body, code, pre, kbd, button, input { font-variant-ligatures: none; font-feature
 (() => {
   // ---------- SQL-Anweisungen ----------
   const SRC = {
-    all: "select * from produkt;",
-    cols: "select name, preis from produkt;",
-    s3sol: "select vorname, nachname, klasse from schueler;",
-    budget: "select name, preis\nfrom produkt\nwhere preis <= 1.5;",
-    vegan: "select name, kategorie\nfrom produkt\nwhere vegan = true and kategorie = 'Getränk';",
-    s4a: "select name, preis\nfrom produkt\nwhere kategorie = 'Getränk' and preis < 1.3;",
-    s4b: "select vorname, guthaben\nfrom schueler\nwhere klasse = '9c' and guthaben < 2;",
-    top3: "select name, kalorien\nfrom produkt\norder by kalorien desc\nlimit 3;",
-    like: "select name\nfrom produkt\nwhere name like 'B%';",
-    s5a: "select name, preis\nfrom produkt\norder by preis\nlimit 3;",
-    s5b: "select name\nfrom produkt\nwhere name like '%semmel';",
-    count: "select count(*) as anzahl, min(preis), max(preis)\nfrom produkt;",
-    group: "select kategorie, count(*) as anzahl, round(avg(preis), 2) as durchschnittspreis\nfrom produkt\ngroup by kategorie;",
-    s6a: "select count(*)\nfrom kauf\nwhere pause = 2;",
-    s6b: "select datum, count(*) as einkaeufe\nfrom kauf\ngroup by datum\norder by einkaeufe desc\nlimit 1;",
-    join: "select schueler.vorname, produkt.name, kauf.datum, kauf.pause\nfrom kauf\njoin schueler on kauf.schueler_id = schueler.id\njoin produkt on kauf.produkt_id = produkt.id\nwhere kauf.datum = '2026-10-12';",
-    renner: "select produkt.name, sum(kauf.anzahl) as stueck\nfrom kauf\njoin schueler on kauf.schueler_id = schueler.id\njoin produkt on kauf.produkt_id = produkt.id\nwhere schueler.klasse = '9b'\ngroup by produkt.name\norder by stueck desc;",
-    spender: "select schueler.vorname, schueler.klasse, round(sum(kauf.anzahl * produkt.preis), 2) as ausgaben\nfrom kauf\njoin schueler on kauf.schueler_id = schueler.id\njoin produkt on kauf.produkt_id = produkt.id\ngroup by schueler.id, schueler.vorname, schueler.klasse\norder by ausgaben desc\nlimit 3;",
-    update: "update schueler\nset guthaben = guthaben + 5\nwhere vorname = 'Ben';",
-    insert: "insert into produkt (id, name, kategorie, preis, kalorien, vegan)\nvalues (17, 'Obstbecher', 'Obst', 1.9, 120, true);",
-    bad: "select name, preis\nfrom produkt\nwhere kategorie = Getränk;"
+    all: "select * from Produkt;",
+    cols: "select name, preis from Produkt;",
+    s3sol: "select vorname, nachname, klasse from Schueler;",
+    budget: "select name, preis\nfrom Produkt\nwhere preis <= 1.5;",
+    vegan: "select name, kategorie\nfrom Produkt\nwhere vegan = true and kategorie = 'Getränk';",
+    s4a: "select name, preis\nfrom Produkt\nwhere kategorie = 'Getränk' and preis < 1.3;",
+    s4b: "select vorname, guthaben\nfrom Schueler\nwhere klasse = '9c' and guthaben < 2;",
+    top3: "select name, kalorien\nfrom Produkt\norder by kalorien desc\nlimit 3;",
+    like: "select name\nfrom Produkt\nwhere name like 'B%';",
+    s5a: "select name, preis\nfrom Produkt\norder by preis\nlimit 3;",
+    s5b: "select name\nfrom Produkt\nwhere name like '%semmel';",
+    count: "select count(*) as anzahl, min(preis), max(preis)\nfrom Produkt;",
+    group: "select kategorie, count(*) as anzahl, round(avg(preis), 2) as durchschnittspreis\nfrom Produkt\ngroup by kategorie;",
+    s6a: "select count(*)\nfrom Kauf\nwhere pause = 2;",
+    s6b: "select datum, count(*) as einkaeufe\nfrom Kauf\ngroup by datum\norder by einkaeufe desc\nlimit 1;",
+    join: "select Schueler.vorname, Produkt.name, Kauf.datum, Kauf.pause\nfrom Kauf\njoin Schueler on Kauf.schueler_id = Schueler.id\njoin Produkt on Kauf.produkt_id = Produkt.id\nwhere Kauf.datum = '2026-10-12';",
+    renner: "select Produkt.name, sum(Kauf.anzahl) as stueck\nfrom Kauf\njoin Schueler on Kauf.schueler_id = Schueler.id\njoin Produkt on Kauf.produkt_id = Produkt.id\nwhere Schueler.klasse = '9b'\ngroup by Produkt.name\norder by stueck desc;",
+    spender: "select Schueler.vorname, Schueler.klasse, round(sum(Kauf.anzahl * Produkt.preis), 2) as ausgaben\nfrom Kauf\njoin Schueler on Kauf.schueler_id = Schueler.id\njoin Produkt on Kauf.produkt_id = Produkt.id\ngroup by Schueler.id, Schueler.vorname, Schueler.klasse\norder by ausgaben desc\nlimit 3;",
+    update: "update Schueler\nset guthaben = guthaben + 5\nwhere vorname = 'Ben';",
+    insert: "insert into Produkt (id, name, kategorie, preis, kalorien, vegan)\nvalues (17, 'Obstbecher', 'Obst', 1.9, 120, true);",
+    bad: "select name, preis\nfrom Produkt\nwhere kategorie = Getränk;"
   };
 
   // ---------- Hervorhebung wie in QPad ----------
@@ -666,7 +667,7 @@ body, code, pre, kbd, button, input { font-variant-ligatures: none; font-feature
   // ---------- Anweisung zerlegen ----------
   const PARTS = {
     select: "<b>select:</b> Welche Spalten sollen im Ergebnis stehen? Hier nur <code>name</code> und <code>preis</code>, durch Komma getrennt.",
-    from: "<b>from:</b> Aus welcher Tabelle kommen die Daten? Hier aus der Tabelle <code>produkt</code>.",
+    from: "<b>from:</b> Aus welcher Tabelle kommen die Daten? Hier aus der Tabelle <code>Produkt</code>.",
     where: "<b>where:</b> Die Bedingung. Nur Produkte, deren Preis höchstens 1.5 ist, kommen ins Ergebnis. Kommazahlen mit Punkt!"
   };
   const anatomy = document.getElementById("anatomy"), anatomySay = document.getElementById("anatomySay");
@@ -691,10 +692,10 @@ body, code, pre, kbd, button, input { font-variant-ligatures: none; font-feature
     final: [
       { q: "Was bewirkt <code>where</code>?",
         o: [["Es legt fest, welche Spalten angezeigt werden.", false, "Die Spalten stehen hinter select."], ["Es filtert: Nur Datensätze, für die die Bedingung stimmt, kommen ins Ergebnis.", true, "Richtig."], ["Es sortiert das Ergebnis.", false, "Sortieren geht mit order by."]] },
-      { q: "In der Tabelle <code>kauf</code> steht <code>produkt_id = 3</code>. Was ist <code>produkt_id</code>?",
-        o: [["Ein Primärschlüssel", false, "Der Primärschlüssel von kauf ist id."], ["Ein Fremdschlüssel: Er verweist auf das Produkt mit der id 3.", true, "Richtig, hier die Leberkässemmel."], ["Die Anzahl der gekauften Produkte", false, "Die steht in der Spalte anzahl."]] },
+      { q: "In der Tabelle <code>Kauf</code> steht <code>produkt_id = 3</code>. Was ist <code>produkt_id</code>?",
+        o: [["Ein Primärschlüssel", false, "Der Primärschlüssel von Kauf ist id."], ["Ein Fremdschlüssel: Er verweist auf das Produkt mit der id 3.", true, "Richtig, hier die Leberkässemmel."], ["Die Anzahl der gekauften Produkte", false, "Die steht in der Spalte anzahl."]] },
       { q: "Welche Anweisung zählt alle Schüler/innen der 9a?",
-        o: [["<code>select count(*) from schueler where klasse = '9a';</code>", true, "Richtig: count(*) zählt, where filtert."], ["<code>select sum(*) from schueler where klasse = '9a';</code>", false, "sum addiert Zahlen einer Spalte, count zählt Datensätze."], ["<code>select * from schueler group by '9a';</code>", false, "group by bildet Gruppen, zählt aber nicht von selbst."]] },
+        o: [["<code>select count(*) from Schueler where klasse = '9a';</code>", true, "Richtig: count(*) zählt, where filtert."], ["<code>select sum(*) from Schueler where klasse = '9a';</code>", false, "sum addiert Zahlen einer Spalte, count zählt Datensätze."], ["<code>select * from Schueler group by '9a';</code>", false, "group by bildet Gruppen, zählt aber nicht von selbst."]] },
       { q: "Du hast aus Versehen ein <code>update</code> ohne <code>where</code> ausgeführt. Was hilft?",
         o: [["Nichts, die Daten sind verloren.", false, "Keine Panik: QPad merkt sich die letzten Datenänderungen."], ["Der Knopf ↶ Daten oder im Menü „Datenbank zurücksetzen“", true, "Richtig. ↶ Daten nimmt die letzte Änderung zurück."], ["Den Text im Editor rückgängig machen (↶)", false, "Das ändert nur den Text, nicht die Daten in der Datenbank."]] }
     ]

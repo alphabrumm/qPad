@@ -1,7 +1,7 @@
 -- Pausenkiosk: kleine Beispieldatenbank für QPad (Demo-Lernpfad)
 -- Schüler/innen der 9. Klassen kaufen in den Pausen am Schulkiosk ein (12. bis 23. Oktober 2026).
 
-create table schueler (
+create table Schueler (
    id integer primary key,
    vorname varchar(30) not null,
    nachname varchar(30) not null,
@@ -9,7 +9,7 @@ create table schueler (
    guthaben decimal(5,2) not null
 );
 
-create table produkt (
+create table Produkt (
    id integer primary key,
    name varchar(40) not null,
    kategorie varchar(20) not null,
@@ -18,16 +18,16 @@ create table produkt (
    vegan boolean not null
 );
 
-create table kauf (
+create table Kauf (
    id integer primary key,
-   schueler_id integer not null references schueler(id),
-   produkt_id integer not null references produkt(id),
+   schueler_id integer not null references Schueler(id),
+   produkt_id integer not null references Produkt(id),
    datum date not null,
    pause integer not null,
    anzahl integer not null
 );
 
-insert into schueler (id, vorname, nachname, klasse, guthaben) values
+insert into Schueler (id, vorname, nachname, klasse, guthaben) values
 (1, 'Lena', 'Huber', '9a', 5.00),
 (2, 'Jonas', 'Wagner', '9a', 2.40),
 (3, 'Mia', 'Bauer', '9a', 6.80),
@@ -53,7 +53,7 @@ insert into schueler (id, vorname, nachname, klasse, guthaben) values
 (23, 'Ella', 'Graf', '9c', 8.20),
 (24, 'Tim', 'Lechner', '9c', 6.80);
 
-insert into produkt (id, name, kategorie, preis, kalorien, vegan) values
+insert into Produkt (id, name, kategorie, preis, kalorien, vegan) values
 (1, 'Butterbreze', 'Gebäck', 1.20, 280, false),
 (2, 'Laugenstange', 'Gebäck', 0.90, 230, true),
 (3, 'Leberkässemmel', 'Warm', 2.80, 520, false),
@@ -71,7 +71,7 @@ insert into produkt (id, name, kategorie, preis, kalorien, vegan) values
 (15, 'Eistee', 'Getränk', 1.30, 160, true),
 (16, 'Spezi', 'Getränk', 1.50, 200, true);
 
-insert into kauf (id, schueler_id, produkt_id, datum, pause, anzahl) values
+insert into Kauf (id, schueler_id, produkt_id, datum, pause, anzahl) values
 (1, 1, 13, '2026-10-12', 2, 1),
 (2, 3, 8, '2026-10-12', 1, 1),
 (3, 6, 7, '2026-10-12', 1, 1),

@@ -28,6 +28,18 @@ export function makeCompletionSource(getModule: () => PadModule | null, getStruc
         if (isStringLiteral(module, lineNumber, column)) return null;
 
         const word = context.matchBefore(/[\wäöüÄÖÜß]*/);
+
+        // Direkt nach „from “ bzw. „join “: nur die Tabellen der Datenbank anbieten
+        // (das Popup öffnet der Editor dort von selbst, siehe SqlEditor.maybeOpenTableCompletion)
+        const beforeWord = context.state.sliceDoc(Math.max(0, word.from - 12), word.from);
+        if (/\b(from|join)\s+$/i.test(beforeWord) && !context.matchBefore(/[\wäöüÄÖÜß]+\.[\wäöüÄÖÜß]*/)) {
+            const tables: Completion[] = [];
+            addDatabaseTables(getStructure(), { fromColumn: 0, toColumn: 0, fromLine: 0, toLine: 0, hintColumns: false, hintTables: true, hintKeywords: [] }, tables);
+            if (tables.length == 0) return null;
+            const typedWord = word.text.toLowerCase();
+            if (!context.explicit && typedWord.length > 0 && tables.some(o => o.label.toLowerCase() == typedWord)) return null;
+            return { from: word.from, options: tables, validFor: /^[\wäöüÄÖÜß]*$/ };
+        }
         const dotMatch = context.matchBefore(/[\wäöüÄÖÜß]+\.[\wäöüÄÖÜß]*/);
         // Automatisch erst öffnen, wenn ein Buchstabe oder ein Punkt getippt wurde
         // (sonst würde Enter nach einem Leerzeichen einen Vorschlag statt eines Zeilenumbruchs einfügen).

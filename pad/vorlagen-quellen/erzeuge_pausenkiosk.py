@@ -52,7 +52,7 @@ q=lambda s:"'"+s.replace("'","''")+"'"
 out=[]
 out.append("-- Pausenkiosk: kleine Beispieldatenbank für QPad (Demo-Lernpfad)")
 out.append("-- Schüler/innen der 9. Klassen kaufen in den Pausen am Schulkiosk ein (12. bis 23. Oktober 2026).\n")
-out.append("""create table schueler (
+out.append("""create table Schueler (
    id integer primary key,
    vorname varchar(30) not null,
    nachname varchar(30) not null,
@@ -60,7 +60,7 @@ out.append("""create table schueler (
    guthaben decimal(5,2) not null
 );
 """)
-out.append("""create table produkt (
+out.append("""create table Produkt (
    id integer primary key,
    name varchar(40) not null,
    kategorie varchar(20) not null,
@@ -69,10 +69,10 @@ out.append("""create table produkt (
    vegan boolean not null
 );
 """)
-out.append("""create table kauf (
+out.append("""create table Kauf (
    id integer primary key,
-   schueler_id integer not null references schueler(id),
-   produkt_id integer not null references produkt(id),
+   schueler_id integer not null references Schueler(id),
+   produkt_id integer not null references Produkt(id),
    datum date not null,
    pause integer not null,
    anzahl integer not null
@@ -83,10 +83,10 @@ rows=[]
 for i,(vn,nn,kl) in enumerate(schueler, start=1):
     g = round(random.choice([0.5,1.2,2.4,3.0,4.5,5.0,6.8,7.5,8.2,10.0,12.5,15.0,20.0,3.6,9.1]),2)
     rows.append(f"({i}, {q(vn)}, {q(nn)}, {q(kl)}, {g:.2f})")
-out.append("insert into schueler (id, vorname, nachname, klasse, guthaben) values\n" + ",\n".join(rows)+";\n")
+out.append("insert into Schueler (id, vorname, nachname, klasse, guthaben) values\n" + ",\n".join(rows)+";\n")
 rows=[f"({i}, {q(n)}, {q(k)}, {p:.2f}, {c}, {'true' if v else 'false'})" for i,(n,k,p,c,v) in enumerate(produkte, start=1)]
-out.append("insert into produkt (id, name, kategorie, preis, kalorien, vegan) values\n" + ",\n".join(rows)+";\n")
+out.append("insert into Produkt (id, name, kategorie, preis, kalorien, vegan) values\n" + ",\n".join(rows)+";\n")
 rows=[f"({i}, {s}, {p}, {q(d)}, {pa}, {a})" for i,(s,p,d,pa,a) in enumerate(kauf, start=1)]
-out.append("insert into kauf (id, schueler_id, produkt_id, datum, pause, anzahl) values\n" + ",\n".join(rows)+";\n")
+out.append("insert into Kauf (id, schueler_id, produkt_id, datum, pause, anzahl) values\n" + ",\n".join(rows)+";\n")
 open(sys.argv[1],"w").write("\n".join(out))
 print(len(kauf),"Käufe")

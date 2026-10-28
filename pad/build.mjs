@@ -87,7 +87,8 @@ fs.writeFileSync(path.join(vorlagen, 'vorlagen.json'), JSON.stringify(list, null
 // Service Worker (Offline-Fähigkeit, nur über HTTPS aktiv)
 const shell = ['./', 'index.html', 'style.css', 'app.js', 'worker.js', 'sql-wasm.js', 'sql-wasm.wasm', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-512.png',
   // Demo-Lernpfad samt Datenbank: auch beim allerersten Start offline verfügbar
-  'learn/demo/Lernpfad-Pausenkiosk.html', 'vorlagen/pausenkiosk.sqLite'];
+  'learn/demo/Lernpfad-Pausenkiosk.html', 'vorlagen/pausenkiosk.sqLite',
+  ...['grass', 'dirt', 'stonebricks', 'deepslatebricks', 'planks', 'darkplanks'].map(t => `tiles/${t}.png`)];
 const hash = crypto.createHash('sha1');
 for (const f of shell.slice(1)) if (fs.existsSync(path.join(out, f))) hash.update(fs.readFileSync(path.join(out, f)));
 const version = hash.digest('hex').substring(0, 10);

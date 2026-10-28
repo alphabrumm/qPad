@@ -45,7 +45,7 @@ Zwischendurch wird alles automatisch im Browser gesichert; ein versehentliches N
 
 ## Themes (wie JPad)
 
-☰ → Darstellung, unter Hell/Dunkel/System: **Standard, Blockwelt** (pixelig und kantig: Gras-, Erde-, Stein- und Holztexturen als selbst erzeugte 16×16-Pixelbilder, 3D-Knöpfe, Pixelschrift),
+☰ → Darstellung, unter Hell/Dunkel/System: **Standard, Blockwelt** (pixelig und kantig: Gras-, Erde-, Stein- und Holztexturen als selbst erzeugte 16×16-Pixelbilder, 3D-Knöpfe, Pixelschrift; Texturen in `public/tiles/`, erzeugt mit `vorlagen-quellen/erzeuge_tiles.py`),
 **Hund, Schaf** (Farbwelten der JPad-Lernpfade), **Flach** (Weiß/Blau, dunkel Navy), **Hacker** (Neon-Grün) und **Pink**.
 Alle folgen Hell/Dunkel/System; Flach/Hacker/Pink mit spitzen Ecken, feinen Linien und Chakra Petch/Share Tech Mono
 (Google Fonts, offline Ersatzschriften). Gemerkt in `qpad.skin`, gesetzt vor dem ersten Zeichnen (kein Aufblitzen).
@@ -63,9 +63,14 @@ Alle folgen Hell/Dunkel/System; Flach/Hacker/Pink mit spitzen Ecken, feinen Lini
 * **„In QPad einfügen“**: Knöpfe im Lernpfad schicken `parent.postMessage({ type: "qpad-insert", sql: "…" }, "*")`;
   QPad hängt die Anweisung ans Ende des geöffneten Skripts und setzt den Cursor hinein (hochkant: Wechsel zum Code).
 * **Demo** (`learn/demo/Lernpfad-Pausenkiosk.html`, auch als ZIP): „Der Pausenkiosk“ mit der Vorlage
-  `pausenkiosk.sqLite` (Schüler/innen der 9. Klassen, Produkte, Einkäufe). Öffnet sich beim allerersten Start,
+  `pausenkiosk.sqLite` (Tabellen `Schueler`, `Produkt`, `Kauf`). Öffnet sich beim allerersten Start,
   später über **☰ → Demo laden**. Quelle der Datenbank: `vorlagen-quellen/pausenkiosk.sql`
   (erzeugt mit `erzeuge_pausenkiosk.py`, in QPad importiert und als .sqlite exportiert).
+
+## Vervollständigung
+
+Nach `from ` bzw. `join ` (getippt, über die Symbolleiste oder per Vervollständigung) öffnet sich sofort die Liste
+der Tabellen der Datenbank.
 
 ## Server-Anforderungen
 

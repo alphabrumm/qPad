@@ -86,6 +86,7 @@ export class SqlEditor {
     private onUpdate(u: ViewUpdate) {
         if (u.docChanged) {
             if (!this.silent) this.cb.onChange(this.getText());
+            if (!this.silent && u.transactions.some(t => t.isUserEvent("input"))) this.maybeOpenTableCompletion();
             this.scheduleCompile();
         } else if (u.selectionSet) {
             this.updateStatementMarks();
@@ -94,6 +95,23 @@ export class SqlEditor {
     }
 
     getText(): string { return this.view.state.doc.toString(); }
+
+    /**
+     * Nach „from “ bzw. „join “ (getippt, über die Symbolleiste eingefügt oder vervollständigt) das Popup
+     * mit den Tabellen der Datenbank sofort öffnen – aber nur am Ende einer Zeile oder vor einem Leerzeichen/Strichpunkt.
+     */
+    private maybeOpenTableCompletion() {
+        const st = this.view.state;
+        const sel = st.selection.main;
+        if (!sel.empty) return;
+        const before = st.sliceDoc(Math.max(0, sel.head - 6), sel.head);
+        const after = st.sliceDoc(sel.head, sel.head + 1);
+        if (!/\b(from|join) $/i.test(before) || !/^($|[\s;)])/.test(after)) return;
+        setTimeout(() => {
+            if (this.view.state.selection.main.head != sel.head) return;
+            startCompletion(this.view);
+        }, 30);
+    }
 
     /** Für die Vervollständigung: immer zum aktuellen Text passend übersetzen (ohne Anzeige zu ändern) */
     upToDateModule(): PadModule | null {
