@@ -36,6 +36,8 @@ type LpMode = "normal" | "wide" | "full" | "hidden";
 const DEMO_LERNPFAD = "learn/demo/Lernpfad-Pausenkiosk.html";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
+/** Eigenes Return-Symbol für Tastenkürzel (statt des Emoji-Pfeils ↩, den iOS blau darstellt) */
+const KBD_RETURN = `<kbd class="kbd-ret" aria-label="Return"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5v6.5a3 3 0 0 1-3 3H6.5"/><path d="M10 10.5l-4 4 4 4"/></svg></kbd>`;
 const esc = (s: any) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 type Template = { name: string, file: string, description?: string };
@@ -471,8 +473,8 @@ class App {
     }
 
     clearResults() {
-        $("#results").innerHTML = `<div class="empty empty-box">Tippe auf <b>▶ Ausführen</b>, um die Anweisung an der Cursorposition auszuführen.<br>
-        Mit Tastatur: <kbd>⇧</kbd>+<kbd>↩</kbd> oder <kbd>⌘</kbd>+<kbd>↩</kbd>.</div>`;
+        $("#results").innerHTML = `<div class="empty empty-box">Tippe auf <b>▶\uFE0E Ausführen</b>, um die Anweisung an der Cursorposition auszuführen.<br>
+        Mit Tastatur: <kbd>⇧</kbd>+${KBD_RETURN} oder <kbd>⌘</kbd>+${KBD_RETURN}.</div>`;
     }
 
     async showTableContent(table: TableStructure) {
@@ -830,13 +832,13 @@ class App {
             <p><b>Alles bleibt auf deinem iPad.</b> Datenbank und Skripte werden automatisch im Browser gesichert.
             Am Ende der Stunde lädst du dein Projekt mit <b>⬇</b> herunter (Dateien → Downloads) und öffnest es nächstes Mal wieder über <b>☰ Menü → Projekt aus Datei öffnen</b>.</p>
             <h3>Ausführen</h3>
-            <p><b>▶ Ausführen</b> führt die Anweisung aus, in der der Cursor steht (grün markiert). Markierst du mehrere Anweisungen, werden alle ausgeführt.
+            <p><b>▶\uFE0E Ausführen</b> führt die Anweisung aus, in der der Cursor steht (grün markiert). Markierst du mehrere Anweisungen, werden alle ausgeführt.
             <b>Alle</b> führt das ganze Skript aus. Rot markierte Anweisungen enthalten Fehler – die Fehlermeldung steht unter dem Editor.</p>
             <h3>Eingabehilfen</h3>
             <p>Die Leiste über dem Editor fügt Sonderzeichen und Schlüsselwörter ein. In der Schema-Ansicht fügt ein Tipp auf einen Spaltennamen diesen in den Editor ein.
             Vergessene Semikolons werden nach kurzer Zeit automatisch ergänzt.</p>
             <h3>Tastatur</h3>
-            <p><kbd>⇧</kbd>+<kbd>↩</kbd> oder <kbd>⌘</kbd>+<kbd>↩</kbd> ausführen · <kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>↩</kbd> alles ausführen · <kbd>⌘</kbd>+<kbd>Z</kbd> rückgängig · <kbd>Ctrl</kbd>+<kbd>Leertaste</kbd> Vorschläge</p>
+            <p><kbd>⇧</kbd>+${KBD_RETURN} oder <kbd>⌘</kbd>+${KBD_RETURN} ausführen · <kbd>⌘</kbd>+<kbd>⇧</kbd>+${KBD_RETURN} alles ausführen · <kbd>⌘</kbd>+<kbd>Z</kbd> rückgängig · <kbd>Ctrl</kbd>+<kbd>Leertaste</kbd> Vorschläge</p>
             <h3>Lernpfade</h3>
             <p>Ein Lernpfad ist eine Anleitung mit Aufgaben, die im Projekt mitreist. <b>Quer</b> steht er rechts neben dem Editor (die Pfeile machen ihn breiter oder schmaler), <b>hochkant</b> wechselst du unten zwischen <b>Lernpfad</b>, <b>Code</b> und <b>Tabellen</b>.
             <b>☰ Menü → Demo laden</b> öffnet den Demo-Lernpfad „Der Pausenkiosk“; Lehrkräfte betten eigene Lernpfade (HTML-Seite oder ZIP mit Bildern) über <b>Lernpfad einbetten</b> ein.</p>
@@ -855,7 +857,7 @@ class App {
                 : "Er steht rechts neben dem Editor."} Mit <b>In QPad einfügen</b> übernimmst du Anweisungen direkt in den Editor.</p>` : ""}
             <ol>
                 <li>Unter <b>☰ Menü → Vorlage laden</b> findest du weitere Beispieldatenbanken; eine Projektdatei deiner Lehrkraft öffnest du über <b>☰ Menü → Projekt aus Datei öffnen</b>.</li>
-                <li>Schreibe SQL in den Editor und tippe auf <b>▶ Ausführen</b>.</li>
+                <li>Schreibe SQL in den Editor und tippe auf <b>▶\uFE0E Ausführen</b>.</li>
                 <li>Lade dein Projekt am Ende der Stunde mit <b>⬇</b> herunter.</li>
             </ol>`, demo ? [
             { label: "Los geht’s", primary: true, action: () => { } },
@@ -1113,7 +1115,7 @@ class App {
             // „In QPad einfügen“ im Lernpfad: Anweisung ans Ende des geöffneten Skripts
             if (this.isTabs()) this.setView("code");
             this.editor.appendBlock(d.sql);
-            this.toast(`In „${this.project.scripts[this.project.activeScript].name}“ eingefügt. Tippe auf ▶ Ausführen.`, 3200);
+            this.toast(`In „${this.project.scripts[this.project.activeScript].name}“ eingefügt. Tippe auf ▶\uFE0E Ausführen.`, 3200);
         }
     }
 
@@ -1388,7 +1390,7 @@ class App {
         pop.querySelectorAll<HTMLElement>(".symhelp-insert").forEach(btn => btn.onclick = () => {
             this.editor.insertBlock(btn.dataset.ex == "0" ? help.simple : help.advanced);
             this.hideSymbolHelp();
-            this.toast("Beispiel eingefügt – mit ▶ Ausführen kannst Du es testen.");
+            this.toast("Beispiel eingefügt – mit ▶\uFE0E Ausführen kannst Du es testen.");
         });
         this.openPopover(pop, anchor);
     }
