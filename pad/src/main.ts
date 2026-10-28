@@ -24,7 +24,7 @@ type View = "code" | "lernpfad" | "tabellen";
 /** Themes wie in JPad (bg/fg: Farben des kleinen Vorschau-Felds im Menü) */
 const SKINS: { id: string, label: string, icon: string, bg: string, fg: string }[] = [
     { id: "default", label: "Standard", icon: "palette", bg: "#f4f5f7", fg: "#1f5fbf" },
-    { id: "kiosk", label: "Kiosk – Farben des Demo-Lernpfads „Der Pausenkiosk“", icon: "pretzel", bg: "#f9e2cf", fg: "#b4521a" },
+    { id: "block", label: "Blockwelt – pixelig und kantig: Gras, Erde, Stein und Holz", icon: "block", bg: "#8fca5c", fg: "#4a2f17" },
     { id: "hund", label: "Hund – Farben des JPad-Lernpfads „Bello lernt Java“", icon: "dog", bg: "#e5f3ea", fg: "#1f8a6a" },
     { id: "schaf", label: "Schaf – Farben des JPad-Lernpfads „Der Schaf-Konstruktor“", icon: "sheep", bg: "#fdebdd", fg: "#e05d26" },
     { id: "flat", label: "Flach – klare Linien in Weiß und Blau", icon: "hacker", bg: "#FFFFFF", fg: "#0050F0" },
@@ -655,7 +655,7 @@ class App {
         this.renderSettings();
     }
     getSkin(): string {
-        try { const k = localStorage.getItem("qpad.skin"); return SKINS.some(x => x.id == k) ? k : "default"; } catch (e) { return "default"; }
+        try { let k = localStorage.getItem("qpad.skin"); if (k == "kiosk") k = "block"; return SKINS.some(x => x.id == k) ? k : "default"; } catch (e) { return "default"; }
     }
     setSkin(k: string) {
         try { localStorage.setItem("qpad.skin", k); } catch (e) { }
@@ -1557,7 +1557,7 @@ type SheetItem = {
 /** Hell/Dunkel/System – wie in JPad über data-effective am <html>-Element; dazu das Theme (data-skin) */
 function applyTheme() {
     let choice = "auto", skin = "default";
-    try { choice = localStorage.getItem("qpad.theme") || "auto"; skin = localStorage.getItem("qpad.skin") || "default"; } catch (e) { }
+    try { choice = localStorage.getItem("qpad.theme") || "auto"; skin = localStorage.getItem("qpad.skin") || "default"; if (skin == "kiosk") skin = "block"; } catch (e) { }
     const root = document.documentElement;
     const dark = choice == "dark" || (choice == "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
     root.dataset.effective = dark ? "dark" : "light";
@@ -1574,7 +1574,7 @@ function loadSkinFonts() {
     link.id = "qp-skin-fonts";
     link.rel = "stylesheet";
     link.href = "https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600&family=Share+Tech+Mono"
-        + "&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Pixelify+Sans:wght@500;700&display=swap";
+        + "&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=VT323&family=Pixelify+Sans:wght@500;700&display=swap";
     document.head.appendChild(link);
 }
 applyTheme();

@@ -559,7 +559,7 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 
 /* =====================================================================
    Themes wie in JPad (Menü → Darstellung, gemerkt in qpad.skin), alle folgen Hell/Dunkel/System.
-   Standard · Kiosk (Farbwelt des Demo-Lernpfads „Der Pausenkiosk“) · Flach · Hacker · Pink
+   Standard · Blockwelt · Hund · Schaf · Flach · Hacker · Pink
    ===================================================================== */
 
 /* ---------- Auswahl im Menü ---------- */
@@ -576,40 +576,93 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 }
 .qp-skin-swatch .jp-icon { width: 24px; height: 24px; }
 
-/* ---------- Kiosk: Brezn-Braun, weiß-blauer Himmel (wie der Demo-Lernpfad) ---------- */
-:root[data-skin="kiosk"] {
-    --sans: "Atkinson Hyperlegible", -apple-system, "Segoe UI", system-ui, sans-serif;
-    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-    --bg: #fbf6ef; --panel: #ffffff; --panel-2: #f6eadb; --border: #ebd9c3;
-    --text: #2b1d12; --muted: #6b5442;
-    --accent: #b4521a; --accent-text: #ffffff; --accent-soft: #f9e2cf;
-    --ok: #2f8a4a; --ok-soft: #dcf1e1; --err: #c23b3b; --err-soft: #fbe0e0; --warn: #a36b00; --warn-soft: #fff0c8;
-    --hl-keyword: #2453b8; --hl-type: #0b7a75; --hl-function: #7a3db8; --hl-string: #b5442a; --hl-number: #0b7a2f;
-    --hl-comment: #8d8378; --hl-ident: #8a5a00; --hl-operator: #4a3a2c; --hl-punct: #6b5442;
+/* ---------- Blockwelt: alles pixelig und kantig wie in einem Blockspiel ----------
+   Texturen (Gras, Erde, Stein, Holz) sind kleine selbst erzeugte 16×16-Pixelbilder, vergrößert ohne Glättung. */
+:root[data-skin="block"] {
+    --sans: "Pixelify Sans", "Courier New", monospace;
+    --mono: "VT323", "Share Tech Mono", ui-monospace, Menlo, monospace;
+    --t-grass: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAACCUlEQVR42k1QsW7bMBR8kWRSEimLkCtZjhMlQBJASDtky9KxQ3+o/9O5nTIU6NyxU5cCHlIgsZFYcmqFsknblGG7wwOEvvG9u3t3d/Tp20cAeLh/8rvuarGJBz3GXK03APAynceD3st07nddAMCrPbz1ZLU8vxwCWEkaPY9LEXWfxyUL/JVar9Ta77qMse12K6LwZTq34kEPALTeoLDfdR/un3D5/zDGtNYAYJ+/D/yuG99BcaziO9jfeMffnat58JsU55fDDiX+l+ZaCn1tv/vB4TawP5DMHUEv5G8eKSWd3Q09m3pSGf7Hsn6Z+JEc9oeF3iyvDuanPpt6Tp4lACCVEZxKZZzPC8m8oqoZJad9gX4Ep/BVnvaFVMaalHI0nrUcbZqiqtMoROiklILT0XiG6KKqrdO+yLNkqdfIQVxR1SgfME8qg3zEWFIZFCiqWnDKKMmzhFGCb5GMWijhCE6LCkbjGaNEKqNN094mpdSmaeXRqoM2cCs4XWoCAK08VoKDKpbgFP8WVY3elnqNrvIsaVO1Ce2LNEyj8LA/bHe7PEtG4xlx7AMc9SMulVnq9bRaOLZTVPVJHAKAlUYhtplG4aSUrWN0FTCv7RBT2W+z3t9aM0pe1aoXcgB4VavtbgcAam24526aHSWdkziclDJgnsUoSaNQm6YtMc8SzJpnCWbDnNo0gtN/2DknvJr51tYAAAAASUVORK5CYII="); --t-dirt: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAACA0lEQVR42k2SQW+bQBCFnzHZNWIJWxIbWmznEFG7vfRS90f00J/SP5pjLok4pEqCREJFFy2bNWDSHqayctnDaGfme2/e5OePrwC268XV7WPgse16odouLyoAWToHkBdVls61sYHv5UXlJFGobQ8gkSKJQvoReCyRAoA2drdZamNL1ZZ1k0jhamMBAFjFUrXdw5PK0nlZN6tYXt0+AjBdv10vAt/Txq5iOf3+7ePlh+jm/tmdunlRiRnrh8Mwjr8b8+XyfXp+avfDX0zKuhnG0e4HF4BqO4IJPBb4nhRctR29hC4F14aZri9V6xCoNrasG5+zvKhU2wF4eFIASKhqO9P1NNSlalk3AErVHm2hebRWCg6E2tjAY442Ni+q7Xpx9IpM/E/oMWIm9UkUOgB2m6VquyydJ1KsYknbfM4AEIY2VgqeRKE21lnF8uFJScGJjYatYmm6/m3Pzf2zFNx0vavajv4dr5tEIbUdtfmcJVF4dfu42yzdsm6O9HQ72pYXvW8sYVB9t1kCmH5enydSTCYYxvGu/HN26u/78fquBCBmjLMTzk72/Qjg+q58HV+dRAo6vrb92/xk6bxULXHmRUVeB743zdJ3F3G078dav7T7fjgczkLxq6yFNzs79Wv9wqbOp4uFP+MUOSfwGLmepfPdZplEoRScVEnBA49RCikKUvB/VFE5D8L1dpsAAAAASUVORK5CYII="); --t-stone: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABeklEQVR42k1Sqw4lIQw9OxlSVUQDYiyGX7u/jMEimCBaRTArmp1sXYGeF/3z+/1yzswMoPeecxYRAGMMVS2lmBkz994B5JzvUgoAMwPg12MMInqex8+Z2cz8GYArhNB7/xgApJT23gCISER673vv3ruZmdnlwP70f7YxBoC1Vs4ZQIwRgIhca633fWOMLp2ZRYSIiIiZ55zMTET4V5f3z/M4pHtwhSGEnLMTAth7r7UuF9Na+2CIyF2dc5xzzqmqqioit49+jHvvlJInM+esta61YowOt9a6Pk/fmJn13kWklDLGEBFVnXO6ycs1eOohBEeqtbbWvG2t1VpLKa21vfflOay1VNUZRGSMEWN0D64khABAVe/vE9y6y3iep7XmqyEi5xwfzjnfZhZjTCl5fD6sqm63915r9StfufuL3E17Bsw8xkgpuR5mdkmttet93znnOUdVU0pzTgDv+xJRCMHhALiqUsr1rdBXc04i2nufc8zMN8/VhhD+Ar0XGZrvwP4vAAAAAElFTkSuQmCC"); --t-planks: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABXklEQVR42pWSsUrEQBRFryFkZgIhs1uEELBVCxFtxM7Wr7D2G/wXf8ZyG2GxULFYUGJIkUwMJG9SWVyJW6zFviIMkze8c+99B48Pd2VVF3lWVrVNExGvtXp++Tg9OXRdr1UEQGsFAIDr+qCsagDDOBZ55roegIifv8uFBRAbw+4iz0KtouXCNq0T8TZN+AaA+AlA0zqt1TCOsTGxMWVVh6v1Bruq+R523odnxwXRCUA9AIjKX8uF5ZDV01to0yQ2hlrLqtYqalrHVtf1Ip5sPAMIXNcTlJo4d7mwIp4WFXk2jOOsKly/ljPf9vm/Cm+uz2fiIs/I876pLy+OhnGkACIQLyQ3lTAjOsuX7N6eEBBUxHPIXFor2iB+Ej/FxoiftIoO7m+vsE/95fCbt5+4VwC4BFwcCvj8cgF5GI34yaZJ0zqbJjZN6CMbtFY0PdjeJV6RmNmVVc2x847treEHIhn3sN4KY9IAAAAASUVORK5CYII=");
+    --bg: #7d7d7d; --panel: #f3ead7; --panel-2: #e6d8b9; --border: #2a1d10;
+    --text: #1e1a14; --muted: #5a4a36;
+    --accent: #3f8f2a; --accent-text: #ffffff; --accent-soft: #d3ebbd;
+    --ok: #3f8f2a; --ok-soft: #d6efc4; --err: #b3261e; --err-soft: #f6d3cf; --warn: #9a6a00; --warn-soft: #fbe9b7;
+    --hl-keyword: #2b4fb8; --hl-type: #0f7f7a; --hl-function: #8a2be2; --hl-string: #a8431c; --hl-number: #2e7d32;
+    --hl-comment: #7a6a55; --hl-ident: #8a5a00; --hl-operator: #2a1d10; --hl-punct: #5a4a36;
+    --shadow: 0 0 0 3px #000, 6px 6px 0 rgba(0, 0, 0, .35);
+    --bevel: inset -3px -3px 0 rgba(0, 0, 0, .35), inset 3px 3px 0 rgba(255, 255, 255, .45);
+    --bevel-down: inset 3px 3px 0 rgba(0, 0, 0, .35), inset -3px -3px 0 rgba(255, 255, 255, .25);
     color-scheme: light;
 }
-:root[data-skin="kiosk"][data-effective="dark"] {
-    --bg: #19120c; --panel: #231910; --panel-2: #2e2217; --border: #4a3726;
-    --text: #f7ede3; --muted: #ccb6a1;
-    --accent: #f08d4f; --accent-text: #19120c; --accent-soft: #45291a;
-    --ok: #6fd08b; --ok-soft: #1f3a2a; --err: #ff8a8a; --err-soft: #452326; --warn: #ffc65c; --warn-soft: #3a2c14;
-    --hl-keyword: #8fb4ff; --hl-type: #4fd1c5; --hl-function: #d2a8ff; --hl-string: #ffab78; --hl-number: #8fd694;
-    --hl-comment: #a2968a; --hl-ident: #f0c674; --hl-operator: #e3d3c4; --hl-punct: #ccb6a1;
+:root[data-skin="block"][data-effective="dark"] {
+    --t-stone: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABk0lEQVR42j2Swa6cMAxFb4GYZGoZITGL/sVb9v+/hw0hM7EMGbrwlA0KwtjH5+bXz89fACKyrus0Sa3qZyJKKYZAAADknEVEVYeUIgBVZeYQqLVPzpnoW+elKUURARBjHP73MAA+xMyIyOcws5mZGQAiIqJ+np/jOL5er/M8mX+HQCEMIQyv12ue5/M8U4rXdbXWWmtE9EXyrrXqtn15nKGU4o1TituWAQy1amufZVnWdV2W5TjM0VUVwDQJgG3LfgAwiMhxmNOrquMCcEUugJm9KYDOP7vQUooTevW6rv4aYyylADgO6wDUqje0S6tVvfe25VKK61LVEGg4DhORnDMAZvYd3IE/iajvu9Y+Mcac8xfJzGrVvu98gmuZJhER36qU4mEPLouZ72r/AUBrnxBARCGQC1TVgZl9luu7M749xhhV1an6vuufzz/7vs/zPI7jeZ5m1nVdSrFWba3t+/54PN7v9/v9JqLrujoR8dR83WmSGOO2ZRc6TXIc37vU952ZDXdYtep9SV3onSAz+0opxX90ixSxg15UlwAAAABJRU5ErkJggg=="); --t-planks: DARKurl("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABXklEQVR42pWSsUrEQBRFryFkZgIhs1uEELBVCxFtxM7Wr7D2G/wXf8ZyG2GxULFYUGJIkUwMJG9SWVyJW6zFviIMkze8c+99B48Pd2VVF3lWVrVNExGvtXp++Tg9OXRdr1UEQGsFAIDr+qCsagDDOBZ55roegIifv8uFBRAbw+4iz0KtouXCNq0T8TZN+AaA+AlA0zqt1TCOsTGxMWVVh6v1Bruq+R523odnxwXRCUA9AIjKX8uF5ZDV01to0yQ2hlrLqtYqalrHVtf1Ip5sPAMIXNcTlJo4d7mwIp4WFXk2jOOsKly/ljPf9vm/Cm+uz2fiIs/I876pLy+OhnGkACIQLyQ3lTAjOsuX7N6eEBBUxHPIXFor2iB+Ej/FxoiftIoO7m+vsE/95fCbt5+4VwC4BFwcCvj8cgF5GI34yaZJ0zqbJjZN6CMbtFY0PdjeJV6RmNmVVc2x847treEHIhn3sN4KY9IAAAAASUVORK5CYII=");
+    --bg: #2f2f37; --panel: #1f1a14; --panel-2: #2c241a; --border: #000000;
+    --text: #f1e7d0; --muted: #bba886;
+    --accent: #6fcf3f; --accent-text: #10200a; --accent-soft: #24401a;
+    --ok: #6fcf3f; --ok-soft: #1f3a17; --err: #ff6b5e; --err-soft: #4a1d1a; --warn: #ffcf4a; --warn-soft: #3d3112;
+    --hl-keyword: #7aa2ff; --hl-type: #5ee6dc; --hl-function: #c792ff; --hl-string: #ffa36b; --hl-number: #8ee28a;
+    --hl-comment: #9a8a72; --hl-ident: #ffd75e; --hl-operator: #e9dcc0; --hl-punct: #bba886;
     color-scheme: dark;
 }
-:root[data-skin="kiosk"] .editor-pane,
-:root[data-skin="kiosk"] .app {
-    background: linear-gradient(180deg, color-mix(in srgb, #2560c4 14%, #fbf6ef) 0%, color-mix(in srgb, #2560c4 5%, #fbf6ef) 45%, color-mix(in srgb, #f2b134 14%, #fbf6ef) 100%);
+:root[data-skin="block"] *, :root[data-skin="block"] *::before, :root[data-skin="block"] *::after { border-radius: 0 !important; }
+:root[data-skin="block"] :is(.app, .topbar, .bottomnav, .sidebar, .lp-head, .tabbar, .runbar, .gutter, .editor .cm-gutters) { image-rendering: pixelated; }
+:root[data-skin="block"] .app { background: var(--t-stone) 0 0 / 48px 48px, var(--bg); }
+
+/* Kopfzeile und untere Reiter: Grasblock */
+:root[data-skin="block"] :is(.topbar, .bottomnav) {
+    background: var(--t-grass) 0 0 / 48px 48px repeat-x, var(--t-dirt) 0 0 / 48px 48px;
+    border-bottom: 3px solid #000; color: #fff;
 }
-:root[data-skin="kiosk"][data-effective="dark"] .editor-pane,
-:root[data-skin="kiosk"][data-effective="dark"] .app {
-    background: linear-gradient(180deg, color-mix(in srgb, #94b8ff 14%, #19120c) 0%, color-mix(in srgb, #94b8ff 5%, #19120c) 45%, color-mix(in srgb, #ffc65c 12%, #19120c) 100%);
+:root[data-skin="block"] .bottomnav { border-top: 3px solid #000; border-bottom: 0; background: var(--t-dirt) 0 0 / 48px 48px; }
+:root[data-skin="block"] :is(.project-name, .saved-local, .bottomnav button) { color: #fff; text-shadow: 2px 2px 0 #000; }
+:root[data-skin="block"] .project-name { font-size: 21px; font-weight: 700; }
+:root[data-skin="block"] .bottomnav button[aria-current="true"] { color: #ffe14a; }
+:root[data-skin="block"] .bottomnav .jp-icon { filter: drop-shadow(2px 2px 0 #000); }
+
+/* Knöpfe: kantig mit 3D-Rand wie Steinknöpfe */
+:root[data-skin="block"] :is(.btn, .iconbtn:not(.small), .symbolbar button, .tbl-head .show, .pager button, .qp-stepper button, .sheet-secondary) {
+    background: #c6c6c6; color: #1e1a14; border: 2px solid #000; box-shadow: var(--bevel); font-family: var(--sans);
 }
-:root[data-skin="kiosk"] .editor :is(.cm-editor, .cm-gutters) { background: transparent; }
-:root[data-skin="kiosk"] :is(.topbar, .runbar, .bottomnav, .tabbar) { background: color-mix(in srgb, var(--panel) 75%, transparent); }
-:root[data-skin="kiosk"] :is(.project-name, .qp-brand, .sidebar-title, .lp-head-title) { font-family: "Pixelify Sans", var(--sans); letter-spacing: .02em; }
-:root[data-skin="kiosk"] .project-name { font-size: 19px; }
-:root[data-skin="kiosk"] .topbar { border-bottom: 3px solid transparent; border-image: repeating-linear-gradient(90deg, #d64545 0 14px, #ffffff 14px 28px) 3; }
+:root[data-skin="block"] :is(.btn, .iconbtn:not(.small), .symbolbar button, .tbl-head .show, .pager button, .qp-stepper button):active { box-shadow: var(--bevel-down); filter: none; }
+:root[data-skin="block"] .topbar .iconbtn.small { color: #fff; filter: drop-shadow(2px 2px 0 #000); }
+:root[data-skin="block"] .symbolbar .kw { color: #24419a; }
+:root[data-skin="block"] .symbolbar .sym { font-family: var(--mono); font-size: 22px; }
+:root[data-skin="block"] .symbolbar .bulb { background: #ffd83d; color: #3a2a00; border: 2px solid #000; box-shadow: var(--bevel); }
+:root[data-skin="block"] .btn.run { background: #4caf2a; color: #fff; text-shadow: 2px 2px 0 #1d4a10; font-size: 19px; }
+:root[data-skin="block"] .btn.download { background: #4fd6d6; color: #08302f; }
+:root[data-skin="block"] .btn.download.dirty::after { background: #ff4b3e; border: 2px solid #000; }
+:root[data-skin="block"] .btn.ghost.disabled { opacity: .55; }
+:root[data-skin="block"] .qp-segmented { background: #8b8b8b; border: 2px solid #000; }
+:root[data-skin="block"] .qp-segmented button { color: #1e1a14; }
+:root[data-skin="block"] .qp-segmented button[aria-pressed="true"] { background: #c6c6c6; box-shadow: var(--bevel); }
+
+/* Flächen: Pergament mit schwarzem Pixelrand, Seitenleisten aus Holz */
+:root[data-skin="block"] :is(.sidebar, .lp-pane) { border-color: #000; border-width: 3px; }
+:root[data-skin="block"] .sidebar { background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)), var(--t-planks) 0 0 / 48px 48px; }
+:root[data-skin="block"] :is(.lp-head, .tabbar, .runbar) { background: var(--t-planks) 0 0 / 48px 48px; border-color: #000; }
+:root[data-skin="block"] :is(.lp-head-title, .tab, .status, .tabbar .iconbtn.small) { color: #fff; text-shadow: 2px 2px 0 #000; }
+:root[data-skin="block"] .tab.active { color: #ffe14a; border-bottom-color: #ffe14a; }
+:root[data-skin="block"] .status:is(.status-error, .status-warning, .status-info) { text-shadow: none; border: 2px solid #000; }
+:root[data-skin="block"] .lp-head-title .jp-icon { color: #ffe14a; filter: drop-shadow(2px 2px 0 #000); }
+:root[data-skin="block"] .editor .cm-gutters { background: var(--t-planks) 0 0 / 48px 48px; color: #fff; border-right: 3px solid #000; text-shadow: 2px 2px 0 #000; }
+:root[data-skin="block"] .editor .cm-editor { font-size: calc(var(--editor-font, 16px) * 1.3); }
+:root[data-skin="block"] .editor .cm-cursor { border-left: 10px solid color-mix(in srgb, var(--accent) 55%, transparent); }
+:root[data-skin="block"] .editor .cm-line.cm-stmt-ok { box-shadow: inset 6px 0 0 var(--ok); }
+:root[data-skin="block"] .editor .cm-line.cm-stmt-error { box-shadow: inset 6px 0 0 var(--err); }
+:root[data-skin="block"] :is(.result-block, .sheet, .symhelp, .tbl, .toast) { border: 3px solid #000; box-shadow: 6px 6px 0 rgba(0, 0, 0, .35); }
+:root[data-skin="block"] .results { background: transparent; }
+:root[data-skin="block"] :is(.result-time, .splitter) { color: #fff; text-shadow: 2px 2px 0 #000; background: transparent; }
+:root[data-skin="block"] .splitter span { background: #000; height: 6px; }
+:root[data-skin="block"] :is(table, .result-sql, .cm-tooltip) { font-family: var(--mono); font-size: 17px; }
+:root[data-skin="block"] th { background: var(--panel-2); border-bottom: 3px solid #000; }
+:root[data-skin="block"] .toast { background: #1e1a14; color: #fff; font-family: var(--sans); }
+:root[data-skin="block"] .qp-drawer { border-right: 3px solid #000; }
+:root[data-skin="block"] .qp-brand-mark {
+    transform: none; color: #fff; text-shadow: 2px 2px 0 #000; border: 2px solid #000;
+    background: linear-gradient(#5f9f35 0 35%, #866043 35% 100%);
+}
+:root[data-skin="block"] :is(.qp-brand, .qp-drawer h2, .sheet-title) { font-family: var(--sans); }
+:root[data-skin="block"] ::selection { background: rgba(79, 214, 214, .45); }
+:root[data-skin="block"] .editor .cm-selectionBackground { background: rgba(79, 214, 214, .4) !important; }
 
 /* ---------- Flach, Hacker, Pink: feine Linien, spitze Ecken, Chakra Petch / Share Tech Mono ---------- */
 :root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) {

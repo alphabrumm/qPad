@@ -15,7 +15,7 @@
             var d = c == "dark" || (c == "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
             document.documentElement.dataset.effective = d ? "dark" : "light";
             var k = null; try { k = localStorage.getItem("qpad.skin"); } catch (e) { }
-            if (k && k != "default") document.documentElement.dataset.skin = k;
+            if (k == "kiosk") k = "block"; if (k && k != "default") document.documentElement.dataset.skin = k;
         })();
     </script>
     <link rel="manifest" href="manifest.webmanifest">

@@ -45,7 +45,7 @@ Zwischendurch wird alles automatisch im Browser gesichert; ein versehentliches N
 
 ## Themes (wie JPad)
 
-☰ → Darstellung, unter Hell/Dunkel/System: **Standard, Kiosk** (Farbwelt des Demo-Lernpfads „Der Pausenkiosk“),
+☰ → Darstellung, unter Hell/Dunkel/System: **Standard, Blockwelt** (pixelig und kantig: Gras-, Erde-, Stein- und Holztexturen als selbst erzeugte 16×16-Pixelbilder, 3D-Knöpfe, Pixelschrift),
 **Hund, Schaf** (Farbwelten der JPad-Lernpfade), **Flach** (Weiß/Blau, dunkel Navy), **Hacker** (Neon-Grün) und **Pink**.
 Alle folgen Hell/Dunkel/System; Flach/Hacker/Pink mit spitzen Ecken, feinen Linien und Chakra Petch/Share Tech Mono
 (Google Fonts, offline Ersatzschriften). Gemerkt in `qpad.skin`, gesetzt vor dem ersten Zeichnen (kein Aufblitzen).
