@@ -28,6 +28,17 @@ const statementMarks = StateField.define<DecorationSet>({
     provide: f => EditorView.decorations.from(f)
 });
 
+/**
+ * Nach einem Stern (select *, a.*) folgt immer ein Leerzeichen – außer in count(*): direkt nach „(“
+ * bzw. wenn schon ein Leerzeichen oder „)“ folgt.
+ */
+function starInsert(doc: { sliceString(from: number, to: number): string }, from: number, to: number): string {
+    const before = doc.sliceString(Math.max(0, from - 1), from);
+    const after = doc.sliceString(to, to + 1);
+    if (before == "(" || /^[\s)]$/.test(after)) return "*";
+    return "* ";
+}
+
 export type EditorCallbacks = {
     onRun: (all: boolean) => void;
     onChange: (text: string) => void;
@@ -45,6 +56,8 @@ export class SqlEditor {
     private extensions: Extension[] = [];
     /** „geparkt“ (Reiter-Layout mit offener Tastatur, andere Ansicht sichtbar): nimmt keine Eingaben an */
     private parking = new Compartment();
+    /** Position direkt hinter einem automatisch ergänzten „* “: ein gleich danach getipptes Leerzeichen wird verschluckt */
+    private starSpaceAt = -1;
 
     constructor(parent: HTMLElement, private db: PadDatabase, private cb: EditorCallbacks) {
 
@@ -72,6 +85,23 @@ export class SqlEditor {
             EditorView.contentAttributes.of({
                 autocorrect: "off", autocapitalize: "off", spellcheck: "false", "aria-label": "SQL-Editor"
             }),
+            // Stern per Tastatur: Leerzeichen dahinter (siehe starInsert)
+            EditorView.inputHandler.of((view, from, to, text) => {
+                if (view.state.readOnly) return false;
+                // Leerzeichen direkt nach dem automatisch gesetzten: nicht verdoppeln
+                if (text == " " && from == to && from == this.starSpaceAt) { this.starSpaceAt = -1; return true; }
+                this.starSpaceAt = -1;
+                if (text != "*") return false;
+                const insert = starInsert(view.state.doc, from, to);
+                if (insert == "*") return false;
+                view.dispatch({
+                    changes: { from, to, insert },
+                    selection: EditorSelection.cursor(from + insert.length),
+                    scrollIntoView: true, userEvent: "input.type"
+                });
+                this.starSpaceAt = from + insert.length;
+                return true;
+            }),
             EditorView.updateListener.of((u: ViewUpdate) => this.onUpdate(u)),
             this.parking.of([]),
         ];
@@ -89,6 +119,7 @@ export class SqlEditor {
             if (!this.silent && u.transactions.some(t => t.isUserEvent("input"))) this.maybeOpenTableCompletion();
             this.scheduleCompile();
         } else if (u.selectionSet) {
+            if (u.state.selection.main.head != this.starSpaceAt) this.starSpaceAt = -1;
             this.updateStatementMarks();
             this.updateStatus();
         }
@@ -144,7 +175,7 @@ export class SqlEditor {
         const cursorIndex = snippet.indexOf("|");
         const text = snippet.replace("|", "");
         const sel = view.state.selection.main;
-        let insertText = text;
+        let insertText = text == "*" ? starInsert(view.state.doc, sel.from, sel.to) : text;
         // bei Schlüsselwörtern automatisch Leerzeichen ergänzen
         if (/^[a-z]/i.test(text) && text.length > 1) {
             const before = view.state.doc.sliceString(Math.max(0, sel.from - 1), sel.from);
@@ -157,6 +188,7 @@ export class SqlEditor {
             selection: EditorSelection.cursor(anchor),
             scrollIntoView: true, userEvent: "input.type"
         });
+        this.starSpaceAt = insertText == "* " ? anchor : -1;
         view.focus();
     }
 
