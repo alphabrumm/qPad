@@ -99,7 +99,7 @@ const shell = ['./', 'index.html', 'style.css', 'app.js', 'worker.js', 'sql-wasm
 const hash = crypto.createHash('sha1');
 for (const f of shell.slice(1)) if (fs.existsSync(path.join(out, f))) hash.update(fs.readFileSync(path.join(out, f)));
 // auch Editor und PathFinder: sonst kämen deren Updates wegen „Cache zuerst“ nicht an
-for (const f of ['editor/index.html', 'editor/qpad-plugin.js', 'pathfinder/core/pathfinder.js', 'pathfinder/core/pathfinder.css', 'pathfinder/core/pftext.js'])
+for (const f of ['editor/index.html', 'editor/qpad-plugin.js', 'pathfinder/core/pathfinder.js', 'pathfinder/core/pathfinder.css', 'pathfinder/core/pftext.js', 'pathfinder/core/pfskin.js'])
   if (fs.existsSync(path.join(out, f))) hash.update(fs.readFileSync(path.join(out, f)));
 const version = hash.digest('hex').substring(0, 10);
 fs.writeFileSync(path.join(out, 'sw.js'), fs.readFileSync(path.join(here, 'src/sw.template.js'), 'utf8')
