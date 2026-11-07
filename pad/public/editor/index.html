@@ -52,9 +52,13 @@ if (inQPad) {
   bridge = makeBridge();
   host = createBridgeHost(bridge, { editor: true });
   addEventListener('message', e => { if (e.source === parent && e.data?.type === 'pf-open' && e.data.doc) { api.openDoc(e.data.doc); api.toast('Lernpfad aus dem Projekt geöffnet'); } });
-  const bar = document.getElementById('edBar'), x = document.createElement('button');
-  x.className = 'ed-btn'; x.title = 'Editor schließen (zurück zum Lernpfad des Projekts)'; x.setAttribute('aria-label', 'Editor schließen'); x.textContent = '✕';
-  x.onclick = () => bridge.post({ type: 'pf-editor-close' }); bar.appendChild(x);
+  // Lehrkraft bearbeitet den Lernpfad des Projekts: „Fertig“ schreibt ihn ins Projekt zurück, ✕ verwirft
+  const bar = document.getElementById('edBar');
+  const done = document.createElement('button'); done.className = 'ed-btn pf-done'; done.title = 'Fertig: Lernpfad ins Projekt übernehmen'; done.innerHTML = '✓<span class="t"> Fertig</span>';
+  done.onclick = async () => { done.disabled = true; try { bridge.post({ type: 'qpad-set-lernpfad', html: await api.buildForApp(), title: api.current.title }); } catch (e) { done.disabled = false; api.toast('Übernehmen fehlgeschlagen: ' + e.message); } };
+  const x = document.createElement('button'); x.className = 'ed-btn'; x.title = 'Schließen ohne Übernehmen'; x.setAttribute('aria-label', 'Schließen ohne Übernehmen'); x.textContent = '✕';
+  x.onclick = () => { if (api.dirty && !confirm('Änderungen nicht ins Projekt übernehmen? (Dein Entwurf bleibt im Editor gespeichert.)')) return; bridge.post({ type: 'pf-editor-close' }); };
+  bar.append(done, x);
 }
 const api = startPathFinder({ appName: 'QPad', logo: '../icon.svg', storage: 'qpad-pathfinder', plugins: [qpadPlugin], host, sample });
 if (bridge) setTimeout(() => bridge.post({ type: 'pf-editor-ready' }), 50);

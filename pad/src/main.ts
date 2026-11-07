@@ -34,6 +34,7 @@ const SKINS: { id: string, label: string, icon: string, bg: string, fg: string }
 type LpMode = "normal" | "wide" | "full" | "hidden";
 /** Demo-Lernpfad (liegt im Paket unter learn/demo) */
 const DEMO_LERNPFAD = "learn/demo/Lernpfad-Pausenkiosk.html";
+const isTeacher = () => { try { return sessionStorage.getItem("qpad.lehrkraft") == "1"; } catch (e) { return false; } };
 /** PathFinder-Dokument aus einem eingebetteten Lernpfad (zum Weiterbearbeiten im Editor) */
 function pathfinderDoc(html: string | null | undefined): any {
     const s = String(html || "");
@@ -92,6 +93,9 @@ class App {
         // Projekt aus URL (für Lehrkräfte: ?projekt=datei.sqlprojekt.json oder ?vorlage=datenbank.sqLite,
         // mit Lernpfad: ?lernpfad=seite.html|.zip|.sqlprojekt.json, auch kombiniert)
         const params = new URLSearchParams(location.search);
+        // Lehrkraft-Modus (?lehrkraft, gilt für diesen Tab): Lernpfad-Editor und Bearbeiten-Stift
+        if (params.has("lehrkraft")) { try { sessionStorage.setItem("qpad.lehrkraft", "1"); } catch (e) { } }
+        const edBtn = document.getElementById("drawerLpEdit"); if (edBtn) edBtn.style.display = isTeacher() ? "" : "none";
         const urlLernpfad = params.get("lernpfad");
         const urlProject = urlLernpfad ? null : params.get("projekt"), urlTemplate = urlLernpfad ? null : params.get("vorlage");
         if (urlProject || urlTemplate) history.replaceState(null, "", location.pathname);
@@ -1142,6 +1146,14 @@ class App {
             frame.setAttribute("allow", "clipboard-write; fullscreen");
             frame.srcdoc = withStorageShim(html, this.project.lernpfadState ?? "{}");
             host.appendChild(frame);
+            if (isTeacher()) {
+                // schwebender gelber Stift: den geöffneten Lernpfad bearbeiten (nur Lehrkraft)
+                const b = document.createElement("button");
+                b.className = "lp-edit-fab"; b.title = "Lernpfad bearbeiten (nur Lehrkraft)"; b.setAttribute("aria-label", "Lernpfad bearbeiten");
+                b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+                b.onclick = () => this.toggleLernpfadEditor();
+                host.appendChild(b);
+            }
         } else {
             delete app.dataset.lernpfad;
             if (this.view == "lernpfad") this.setView("code");
@@ -1247,6 +1259,9 @@ class App {
 
     /** Lernpfad-Editor PathFinder im Lernpfad-Bereich öffnen bzw. schließen */
     toggleLernpfadEditor() {
+        if (!isTeacher()) return;
+        if (!this.editorOpen && this.project.lernpfadHtml && !pathfinderDoc(this.project.lernpfadHtml)
+            && !confirm("Dieser Lernpfad wurde nicht mit PathFinder erstellt und lässt sich (noch) nicht direkt bearbeiten. Den Editor trotzdem öffnen, z. B. für einen neuen Lernpfad? Erst „Fertig“ ersetzt den Lernpfad des Projekts.")) return;
         this.editorOpen = !this.editorOpen;
         this.showLernpfad();
         if (this.editorOpen) { if (this.isTabs()) this.setView("lernpfad"); else this.showLernpfadLayout(); }

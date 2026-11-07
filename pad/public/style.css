@@ -874,3 +874,8 @@ html[data-layout="tabs"] .toast { bottom: calc(72px + env(safe-area-inset-bottom
 :root:is([data-skin="hund"], [data-skin="schaf"]) .project-name { font-size: 19px; }
 :root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .topbar .bulb { color: var(--accent-text); }
 :root:is([data-skin="flat"], [data-skin="hacker"], [data-skin="pink"]) .topbar .histbtn { background: transparent; border-color: var(--border); color: var(--accent); }
+
+/* Lehrkraft: schwebender Stift zum Bearbeiten des Lernpfads */
+.lp-edit-fab { position: absolute; right: 16px; bottom: 16px; z-index: 5; width: 52px; height: 52px; border-radius: 50%; border: 2px solid #1f1b2e; background: #f6c434; color: #1f1b2e; display: grid; place-items: center; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.25); padding: 0; }
+.lp-edit-fab svg { width: 26px; height: 26px; }
+.lp-edit-fab:active { transform: scale(.94); }
