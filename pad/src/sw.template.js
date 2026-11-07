@@ -21,9 +21,11 @@ self.addEventListener("fetch", e => {
         // Netz zuerst, damit Aktualisierungen ankommen
         e.respondWith(fetch(req).then(r => {
             const copy = r.clone();
-            caches.open(CACHE).then(c => c.put(isList ? req : "index.html", copy));
+            // Seiten in Unterordnern (z. B. editor/) unter eigenem Namen merken, nicht als App-Startseite
+            const key = isList || /\/editor\//.test(url.pathname) ? req : "index.html";
+            caches.open(CACHE).then(c => c.put(key, copy));
             return r;
-        }).catch(() => caches.match(isList ? req : "index.html")));
+        }).catch(() => caches.match(isList || /\/editor\//.test(url.pathname) ? req : "index.html")));
         return;
     }
     // sonst Cache zuerst; Vorlagen und Lernpfade werden beim ersten Abruf zwischengespeichert

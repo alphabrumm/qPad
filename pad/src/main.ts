@@ -34,6 +34,12 @@ const SKINS: { id: string, label: string, icon: string, bg: string, fg: string }
 type LpMode = "normal" | "wide" | "full" | "hidden";
 /** Demo-Lernpfad (liegt im Paket unter learn/demo) */
 const DEMO_LERNPFAD = "learn/demo/Lernpfad-Pausenkiosk.html";
+/** PathFinder-Dokument aus einem eingebetteten Lernpfad (zum Weiterbearbeiten im Editor) */
+function pathfinderDoc(html: string | null | undefined): any {
+    const s = String(html || "");
+    const m = s.match(/<script type="application\/json" id="pf-doc-app">([\s\S]*?)<\/script>/) || s.match(/<script type="application\/json" id="pf-doc">([\s\S]*?)<\/script>/);
+    try { return m ? JSON.parse(m[1]) : null; } catch (e) { return null; }
+}
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 /** Eigenes Return-Symbol für Tastenkürzel (statt des Emoji-Pfeils ↩, den iOS blau darstellt) */
@@ -58,6 +64,8 @@ class App {
     view: View = "code";
     private layoutMq = matchMedia("(min-width: 900px) and (min-aspect-ratio: 1/1)");
     private lpStateTimer: any = null;
+    /** Lernpfad-Editor (PathFinder) im Lernpfad-Bereich geöffnet? */
+    private editorOpen = false;
 
     async start() {
         this.setupViewport();
@@ -344,7 +352,9 @@ class App {
                         let sql = st.sql.trim().replace(/;+\s*$/, "");
                         if ((st.ast as any).limitNode == null) sql += "\nlimit 100000";
                         const results = await this.db.exec(sql);
-                        out.push(this.renderResult(st.sql, results.pop() ?? null, st.resultTypes));
+                        const last = results.pop() ?? null;
+                        out.push(this.renderResult(st.sql, last, st.resultTypes));
+                        this.postToLernpfad({ type: "qpad-executed", sql: st.sql, columns: last?.columns ?? [], values: (last?.values ?? []).slice(0, 2000) });
                     } else {
                         const sql = new StatementCleaner().clean(st);
                         await this.db.exec(sql);
@@ -1068,7 +1078,7 @@ class App {
     /** Ansicht im Reiter-Layout (hochkant): Lernpfad, Code oder Tabellen */
     setView(view: View) {
         const app = $("#app");
-        if (view == "lernpfad" && !this.project?.lernpfadHtml) view = "code";
+        if (view == "lernpfad" && !this.project?.lernpfadHtml && !this.editorOpen) view = "code";
         this.view = view;
         app.dataset.view = view;
         document.querySelectorAll<HTMLElement>("#bottomnav [data-view]").forEach(b =>
@@ -1109,7 +1119,19 @@ class App {
         const host = $("#lernpfad");
         host.innerHTML = "";
         const app = $("#app");
-        if (html) {
+        const edit = $("#drawerLpEdit")?.querySelector("span");
+        if (edit) edit.textContent = this.editorOpen ? "Lernpfad-Editor schließen" : (pathfinderDoc(html) ? "Lernpfad bearbeiten (PathFinder)" : "Lernpfad-Editor (PathFinder)");
+        if (this.editorOpen) {
+            // Der Editor kommt vom selben Server und speichert seine Entwürfe selbst im Browser
+            app.dataset.lernpfad = "1";
+            $("#lpTitle").textContent = "Lernpfad-Editor";
+            const frame = document.createElement("iframe");
+            frame.className = "lp-frame";
+            frame.title = "Lernpfad-Editor";
+            frame.setAttribute("allow", "clipboard-write; fullscreen");
+            frame.src = "editor/index.html?in=qpad";
+            host.appendChild(frame);
+        } else if (html) {
             app.dataset.lernpfad = "1";
             $("#lpTitle").textContent = titleOf(html) ?? "Lernpfad";
             const frame = document.createElement("iframe");
@@ -1126,10 +1148,59 @@ class App {
         }
     }
 
-    private onLernpfadMessage(ev: MessageEvent) {
+    /** Nachricht an den Lernpfad bzw. den Lernpfad-Editor */
+    private postToLernpfad(msg: any) {
+        const frame = $("#lernpfad").querySelector("iframe") as HTMLIFrameElement | null;
+        try { frame?.contentWindow?.postMessage(msg, "*"); } catch (e) { }
+    }
+
+    /** Lesende Abfrage für die Prüfung im Lernpfad (verändert die Datenbank nicht) */
+    private async lernpfadQuery(sql: string) {
+        const clean = String(sql || "").replace(/'(?:[^']|'')*'|"(?:[^"]|"")*"|--[^\n]*|\/\*[\s\S]*?\*\//g, " ");
+        if (!/^\s*(select|with)\b/i.test(clean) || /\b(insert|update|delete|drop|create|alter|replace|attach|detach|pragma|vacuum|reindex)\b/i.test(clean) || /;\s*\S/.test(clean))
+            return { error: "Nur lesende Abfragen (SELECT) können geprüft werden." };
+        try {
+            const res = (await this.db.exec(sql.trim().replace(/;+\s*$/, ""))).pop();
+            return { columns: res?.columns ?? [], values: (res?.values ?? []).slice(0, 2000) };
+        } catch (e) { return { error: translateSqliteError(String(e)) }; }
+    }
+
+    private async onLernpfadMessage(ev: MessageEvent) {
         const frame = $("#lernpfad").querySelector("iframe");
         if (!frame || ev.source != frame.contentWindow || !this.project) return;
         const d = ev.data;
+        if (d?.type == "qpad") {
+            // Schnittstelle für Lernpfade (PathFinder): siehe README „Lernpfad-Schnittstelle“
+            const reply = (m: any) => this.postToLernpfad(m);
+            if (d.action == "hello") reply({ type: "qpad-hello", version: 1 });
+            else if (d.action == "insert" && typeof d.sql == "string" && d.sql.length < 20000) {
+                if (this.isTabs()) this.setView("code");
+                this.editor.appendBlock(d.sql);
+                this.toast(`In „${this.project.scripts[this.project.activeScript].name}“ eingefügt. Tippe auf ▶\uFE0E Ausführen.`, 3200);
+            } else if (d.action == "query" && typeof d.sql == "string") reply({ type: "qpad-query", req: d.req, ...(await this.lernpfadQuery(d.sql)) });
+            else if (d.action == "script") {
+                this.editor.compileNow();
+                const st = this.editor.getSelectedStatements()[0];
+                reply({ type: "qpad-script", req: d.req, text: this.editor.getText(), statement: st ? this.editor.sqlOf(st).trim() : "", database: this.project.templateName ?? "" });
+            } else if (d.action == "vorlage" && typeof d.name == "string") {
+                if (this.db.databaseStructure.tables.length > 0 && !confirm(`Datenbank „${d.name}“ laden? Die jetzige Datenbank dieses Projekts wird dabei ersetzt.`)) return;
+                await this.createProjectFromTemplate(await this.templateFor(d.name, location.href));
+            }
+            return;
+        }
+        if (this.editorOpen) {
+            if (d?.type == "pf-editor-ready") { const doc = pathfinderDoc(this.project.lernpfadHtml); if (doc) this.postToLernpfad({ type: "pf-open", doc }); }
+            else if (d?.type == "pf-editor-close") { this.editorOpen = false; this.showLernpfad(); }
+            else if (d?.type == "qpad-set-lernpfad" && typeof d.html == "string") {
+                this.project.lernpfadHtml = d.html;
+                this.project.lernpfadState = "{}";
+                this.editorOpen = false;
+                this.touch();
+                this.showLernpfad();
+                this.toast("Lernpfad ins Projekt übernommen – so sehen ihn die Schüler.", 3500);
+            }
+            return;
+        }
         if (d?.type == "qpad-lernpfad-storage") {
             // Häkchen usw. nur lokal merken; das Projekt gilt dadurch nicht als geändert
             try { this.project.lernpfadState = JSON.stringify(d.state ?? {}); } catch (e) { return; }
@@ -1172,6 +1243,13 @@ class App {
             }
         };
         input.click();
+    }
+
+    /** Lernpfad-Editor PathFinder im Lernpfad-Bereich öffnen bzw. schließen */
+    toggleLernpfadEditor() {
+        this.editorOpen = !this.editorOpen;
+        this.showLernpfad();
+        if (this.editorOpen) { if (this.isTabs()) this.setView("lernpfad"); else this.showLernpfadLayout(); }
     }
 
     removeLernpfad() {
@@ -1491,6 +1569,7 @@ class App {
         menu("#drawerDemo", () => this.loadDemo());
         menu("#drawerLpAdd", () => this.pickLernpfad());
         menu("#drawerLpRemove", () => this.removeLernpfad());
+        menu("#drawerLpEdit", () => this.toggleLernpfadEditor());
         document.querySelectorAll<HTMLElement>("[data-theme-choice]").forEach(b => b.onclick = () => this.setThemeChoice(b.dataset.themeChoice));
         this.buildSkinPicker();
         $("#fontSmaller").onclick = () => this.setFontSize(this.getFontSize() - 1);

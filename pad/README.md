@@ -62,6 +62,18 @@ Alle folgen Hell/Dunkel/System; Flach/Hacker/Pink mit spitzen Ecken, feinen Lini
   (Dateiname aus `vorlagen/` oder Adresse relativ zum Lernpfad). Sie wird beim Öffnen per Link geladen bzw. beim Einbetten angeboten.
 * **„In QPad einfügen“**: Knöpfe im Lernpfad schicken `parent.postMessage({ type: "qpad-insert", sql: "…" }, "*")`;
   QPad hängt die Anweisung ans Ende des geöffneten Skripts und setzt den Cursor hinein (hochkant: Wechsel zum Code).
+* **Lernpfad-Editor PathFinder** (☰ → „Lernpfad-Editor (PathFinder)“): öffnet `editor/index.html?in=qpad` im Lernpfad-Bereich.
+  PathFinder liegt als Git-Submodul unter `vendor/pathfinder` (`git submodule update --init`; neuer Stand:
+  `git -C vendor/pathfinder pull origin main` und committen) und wird beim Bauen nach `dist/pathfinder/` kopiert.
+  QPad-Bausteine in `public/editor/qpad-plugin.js`: **SQL-Aufgabe** (QPad vergleicht das Ergebnis jeder ausgeführten
+  SELECT-Anweisung mit der Musterabfrage, Spaltennamen egal, Reihenfolge wahlweise) und **Datenbank laden**;
+  SQL-Code-Bausteine bekommen „In QPad einfügen“. Export „für QPad“ bzw. „In dieses QPad-Projekt übernehmen“
+  macht daraus den Lernpfad des Projekts; im normalen Browser stellt sich die Datei auf Selbstkontrolle um.
+* **Lernpfad-Schnittstelle** (postMessage an `parent`): `{type:"qpad", action:"hello"}` → `qpad-hello`;
+  `action:"insert", sql`; `action:"query", req, sql` (nur lesend) → `{type:"qpad-query", req, columns, values | error}`;
+  `action:"script", req` → `{type:"qpad-script", req, text, statement, database}`; `action:"vorlage", name`.
+  QPad meldet jede ausgeführte SELECT-Anweisung mit `{type:"qpad-executed", sql, columns, values}`.
+  Nur für den Editor: `pf-editor-ready` (→ `pf-open` mit dem PathFinder-Dokument), `pf-editor-close`, `qpad-set-lernpfad`.
 * **Demo** (`learn/demo/Lernpfad-Pausenkiosk.html`, auch als ZIP): „Der Pausenkiosk“ mit der Vorlage
   `pausenkiosk.sqLite` (Tabellen `Schueler`, `Produkt`, `Kauf`). Öffnet sich beim allerersten Start,
   später über **☰ → Demo laden**. Quelle der Datenbank: `vorlagen-quellen/pausenkiosk.sql`

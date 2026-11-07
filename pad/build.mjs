@@ -84,6 +84,13 @@ for (const f of fs.readdirSync(dbDir)) {
 list.sort((a, b) => Object.keys(known).indexOf(a.file) - Object.keys(known).indexOf(b.file));
 fs.writeFileSync(path.join(vorlagen, 'vorlagen.json'), JSON.stringify(list, null, 2));
 
+// Lernpfad-Editor PathFinder (Git-Submodul ../vendor/pathfinder): Kern, Schriften und Symbol nach dist/pathfinder/
+const pf = path.join(here, '..', 'vendor', 'pathfinder');
+if (fs.existsSync(path.join(pf, 'core'))) {
+  for (const d of ['core', 'fonts']) copyDir(path.join(pf, d), path.join(out, 'pathfinder', d));
+  fs.copyFileSync(path.join(pf, 'icon.svg'), path.join(out, 'pathfinder', 'icon.svg'));
+} else console.warn('Hinweis: vendor/pathfinder fehlt (git submodule update --init) – Lernpfad-Editor wird nicht gebaut.');
+
 // Service Worker (Offline-Fähigkeit, nur über HTTPS aktiv)
 const shell = ['./', 'index.html', 'style.css', 'app.js', 'worker.js', 'sql-wasm.js', 'sql-wasm.wasm', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-512.png',
   // Demo-Lernpfad samt Datenbank: auch beim allerersten Start offline verfügbar
@@ -91,6 +98,9 @@ const shell = ['./', 'index.html', 'style.css', 'app.js', 'worker.js', 'sql-wasm
   ...['grass', 'dirt', 'stonebricks', 'deepslatebricks', 'planks', 'darkplanks'].map(t => `tiles/${t}.png`)];
 const hash = crypto.createHash('sha1');
 for (const f of shell.slice(1)) if (fs.existsSync(path.join(out, f))) hash.update(fs.readFileSync(path.join(out, f)));
+// auch Editor und PathFinder: sonst kämen deren Updates wegen „Cache zuerst“ nicht an
+for (const f of ['editor/index.html', 'editor/qpad-plugin.js', 'pathfinder/core/pathfinder.js', 'pathfinder/core/pathfinder.css', 'pathfinder/core/pftext.js'])
+  if (fs.existsSync(path.join(out, f))) hash.update(fs.readFileSync(path.join(out, f)));
 const version = hash.digest('hex').substring(0, 10);
 fs.writeFileSync(path.join(out, 'sw.js'), fs.readFileSync(path.join(here, 'src/sw.template.js'), 'utf8')
   .replace('__VERSION__', version).replace('__SHELL__', JSON.stringify(shell)));

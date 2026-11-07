@@ -1,0 +1,3 @@
+[submodule "vendor/pathfinder"]
+	path = vendor/pathfinder
+	url = https://github.com/alphabrumm/pathfinder

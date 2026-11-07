@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lernpfad-Editor (PathFinder) · QPad</title>
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../pathfinder/core/pathfinder.css">
+</head>
+<body>
+<div class="app" id="app">
+  <section class="lpwrap" aria-label="Lernpfad">
+    <div class="ed-bar" id="edBar">
+      <span class="pf-brand"><img src="../pathfinder/icon.svg" alt=""><span>PathFinder</span></span>
+      <span class="ed-seg" id="modeSeg"><button data-mode="edit" aria-pressed="true">✎ Bearbeiten</button><button data-mode="preview">▶ Vorschau</button></span>
+      <button class="ed-btn" id="bUndo" title="Rückgängig (⌘Z)" aria-label="Rückgängig">↶</button>
+      <button class="ed-btn" id="bRedo" title="Wiederholen (⇧⌘Z)" aria-label="Wiederholen">↷</button>
+      <button class="ed-btn" id="bSingle" title="Nur aktuelle Station zeigen" aria-pressed="false">◧<span class="t"> Station</span></button>
+      <button class="ed-btn" id="bDesign" title="Design">🎨<span class="t"> Design</span></button>
+      <span class="sp"></span>
+      <span class="ed-saved" id="saved"></span>
+      <button class="ed-btn" id="bOpen" title="Lernpfad öffnen oder neu anlegen">📂<span class="t"> Öffnen</span></button>
+      <button class="ed-btn" id="bMore" title="Mehr">⋯</button>
+    </div>
+    <div class="lp-scroll" id="scroll"><div class="lp" id="lp"></div></div>
+  </section>
+</div>
+<script type="module">
+import { startPathFinder } from '../pathfinder/core/pathfinder.js';
+import { qpadPlugin, createBridgeHost, makeBridge } from './qpad-plugin.js';
+
+// In QPad geöffnet (Menü → Lernpfad-Editor)? Dann spricht der Editor direkt mit QPad.
+const inQPad = new URLSearchParams(location.search).get('in') === 'qpad' && parent !== window;
+
+const sample = () => ({
+  v: 2, id: 'qpad-entwurf', form: 'lernpfad', design: { pal: 1, font: 'schlicht', shape: 'rund', hero: 'logo', heroImg: '' },
+  kicker: 'QPad · Lernpfad', title: 'Einkaufen am Pausenkiosk', subtitle: 'SELECT, WHERE und ORDER BY mit der Datenbank „Pausenkiosk“', goals: [], rank: '', anim: {}, typeLines: [],
+  stations: [
+    { title: 'Die Datenbank', sub: 'Start', blocks: [
+      { type: 'dbload', label: 'Datenbank laden', name: 'pausenkiosk.sqLite', html: 'Lade zuerst die Datenbank des Pausenkiosks.' },
+      { type: 'text', html: 'Die Tabelle <b>Produkt</b> enthält alles, was der Kiosk verkauft.' },
+      { type: 'code', lang: 'sql', code: 'SELECT * FROM Produkt;' } ] },
+    { title: 'Günstige Snacks', sub: 'WHERE', blocks: [
+      { type: 'sqltask', id: 'q1', title: 'Unter einem Euro', html: 'Gib <b>Name und Preis</b> aller Produkte aus, die weniger als 1 € kosten.', query: 'SELECT name, preis FROM Produkt WHERE preis < 1', start: 'SELECT name, preis FROM Produkt', ordered: false, xp: 20, tips: ['Die Bedingung steht hinter <code>WHERE</code>.', 'Kleiner als: <code>&lt;</code>'], solution: '', img: '' },
+      { type: 'lock', after: 'q1' },
+      { type: 'info', kind: 'merke', title: 'Merke', html: 'Mit <code>WHERE</code> filterst du Zeilen.' } ] },
+  ].map((s, i) => ({ id: 's' + i, check: false, ...s, blocks: s.blocks.map((b, j) => ({ id: b.id || `b${i}${j}`, ...b })) })),
+  cert: { on: true, need: 'alle', pct: 80, text: 'hat den Lernpfad erfolgreich bearbeitet.', show: { zeit: true, tipps: true, quiz: true, xp: true } },
+});
+
+let host = {};
+let bridge = null;
+if (inQPad) {
+  bridge = makeBridge();
+  host = createBridgeHost(bridge, { editor: true });
+  addEventListener('message', e => { if (e.source === parent && e.data?.type === 'pf-open' && e.data.doc) { api.openDoc(e.data.doc); api.toast('Lernpfad aus dem Projekt geöffnet'); } });
+  const bar = document.getElementById('edBar'), x = document.createElement('button');
+  x.className = 'ed-btn'; x.title = 'Editor schließen (zurück zum Lernpfad des Projekts)'; x.setAttribute('aria-label', 'Editor schließen'); x.textContent = '✕';
+  x.onclick = () => bridge.post({ type: 'pf-editor-close' }); bar.appendChild(x);
+}
+const api = startPathFinder({ appName: 'QPad', logo: '../icon.svg', storage: 'qpad-pathfinder', plugins: [qpadPlugin], host, sample });
+if (bridge) setTimeout(() => bridge.post({ type: 'pf-editor-ready' }), 50);
+</script>
+</body></html>
