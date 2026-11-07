@@ -51,7 +51,7 @@ let bridge = null;
 if (inQPad) {
   bridge = makeBridge();
   host = createBridgeHost(bridge, { editor: true });
-  addEventListener('message', e => { if (e.source === parent && e.data?.type === 'pf-open' && e.data.doc) { api.openDoc(e.data.doc); api.toast('Lernpfad aus dem Projekt geöffnet'); } });
+  addEventListener('message', e => { if ((e.source === parent || e.origin === location.origin) && e.data?.type === 'pf-open' && e.data.doc) { api.openDoc(e.data.doc); api.toast('Lernpfad aus dem Projekt geöffnet'); } });
   // Lehrkraft bearbeitet den Lernpfad des Projekts: „Fertig“ schreibt ihn ins Projekt zurück, ✕ verwirft
   const bar = document.getElementById('edBar');
   const done = document.createElement('button'); done.className = 'ed-btn pf-done'; done.title = 'Fertig: Lernpfad ins Projekt übernehmen'; done.innerHTML = '✓<span class="t"> Fertig</span>';

@@ -37,9 +37,16 @@ const DEMO_LERNPFAD = "learn/demo/Lernpfad-Pausenkiosk.html";
 const isTeacher = () => { try { return sessionStorage.getItem("qpad.lehrkraft") == "1"; } catch (e) { return false; } };
 /** PathFinder-Dokument aus einem eingebetteten Lernpfad (zum Weiterbearbeiten im Editor) */
 function pathfinderDoc(html: string | null | undefined): any {
+    // ohne regulären Ausdruck über die ganze Seite: Lernpfade können mehrere MB groß sein (Safari bricht dann ab)
     const s = String(html || "");
-    const m = s.match(/<script type="application\/json" id="pf-doc-app">([\s\S]*?)<\/script>/) || s.match(/<script type="application\/json" id="pf-doc">([\s\S]*?)<\/script>/);
-    try { return m ? JSON.parse(m[1]) : null; } catch (e) { return null; }
+    for (const id of ["pf-doc-app", "pf-doc"]) {
+        const tag = `<script type="application/json" id="${id}">`, a = s.indexOf(tag);
+        if (a < 0) continue;
+        const b = s.indexOf("</script>", a + tag.length);
+        if (b < 0) continue;
+        try { return JSON.parse(s.slice(a + tag.length, b)); } catch (e) { }
+    }
+    return null;
 }
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
